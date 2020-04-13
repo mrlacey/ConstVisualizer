@@ -134,9 +134,9 @@ namespace ConstVisualizer
                                 foreach (var variable in fds.Declaration.Variables)
                                 {
                                     KnownConsts.Add(
-                                        (variable.Identifier.Text.Replace("\\\"", "\""),
+                                        (variable.Identifier.Text,
                                          qualification,
-                                         variable.Initializer.Value.ToString(),
+                                         variable.Initializer.Value.ToString().Replace("\\\"", "\""),
                                          filePath));
                                 }
                             }
