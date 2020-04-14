@@ -119,7 +119,10 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                System.Diagnostics.Debug.WriteLine(exc);
+                await OutputPane.Instance?.WriteAsync("Error in LoadSystemTextSettingsAsync");
+                await OutputPane.Instance?.WriteAsync(exc.Message);
+                await OutputPane.Instance?.WriteAsync(exc.Source);
+                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
             }
         }
     }

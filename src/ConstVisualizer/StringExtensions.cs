@@ -32,12 +32,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                ////await OutputPane.Instance?.WriteAsync("Error in IndexOfAnyAsync");
-                ////await OutputPane.Instance?.WriteAsync(source);
-                ////await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                ////await OutputPane.Instance?.WriteAsync(ex.Message);
-                ////await OutputPane.Instance?.WriteAsync(ex.Source);
-                ////await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error in IndexOfAnyAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
             return (-1, string.Empty);
@@ -73,12 +73,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                ////await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesAsync");
-                ////await OutputPane.Instance?.WriteAsync(source);
-                ////await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                ////await OutputPane.Instance?.WriteAsync(ex.Message);
-                ////await OutputPane.Instance?.WriteAsync(ex.Source);
-                ////await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error in GetAllWholeWordIndexesAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
             return result;
@@ -109,12 +109,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                ////await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
-                ////await OutputPane.Instance?.WriteAsync(source);
-                ////await OutputPane.Instance?.WriteAsync(searchTerm);
-                ////await OutputPane.Instance?.WriteAsync(ex.Message);
-                ////await OutputPane.Instance?.WriteAsync(ex.Source);
-                ////await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(searchTerm);
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
             return result;

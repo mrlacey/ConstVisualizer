@@ -156,12 +156,6 @@ namespace ConstVisualizer
             }
         }
 
-        internal static void Reset()
-        {
-            KnownConsts.Clear();
-            HasParsedSolution = false;
-        }
-
         public static string GetQualification(MemberDeclarationSyntax dec)
         {
             var result = string.Empty;
@@ -191,6 +185,12 @@ namespace ConstVisualizer
         public static bool IsConst(SyntaxNode node)
         {
             return node.ChildTokens().Any(t => t.IsKind(SyntaxKind.ConstKeyword));
+        }
+
+        internal static void Reset()
+        {
+            KnownConsts.Clear();
+            HasParsedSolution = false;
         }
 
         internal static string GetDisplayText(string constName, string qualifier, string fileName)

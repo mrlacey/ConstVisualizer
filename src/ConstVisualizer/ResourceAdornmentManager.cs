@@ -4,14 +4,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Xml;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -30,7 +26,6 @@ namespace ConstVisualizer
         private readonly IAdornmentLayer layer;
         private readonly IWpfTextView view;
         private readonly string fileName;
-        private readonly List<(string alias, int lineNo, string resName)> aliases = new List<(string alias, int lineNo, string resName)>();
         private bool hasDoneInitialCreateVisualsPass = false;
 
         public ResourceAdornmentManager(IWpfTextView view)
@@ -101,7 +96,9 @@ namespace ConstVisualizer
         /// <summary>
         /// On layout change add the adornment to any reformatted lines.
         /// </summary>
+#pragma warning disable VSTHRD100 // Avoid async void methods
         private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
+#pragma warning restore VSTHRD100 // Avoid async void methods
         {
             var collection = this.hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
 
@@ -115,10 +112,10 @@ namespace ConstVisualizer
                 }
                 catch (InvalidOperationException ex)
                 {
-                    ////await OutputPane.Instance?.WriteAsync("Error handling layout changed");
-                    ////await OutputPane.Instance?.WriteAsync(ex.Message);
-                    ////await OutputPane.Instance?.WriteAsync(ex.Source);
-                    ////await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                    await OutputPane.Instance?.WriteAsync("Error handling layout changed");
+                    await OutputPane.Instance?.WriteAsync(ex.Message);
+                    await OutputPane.Instance?.WriteAsync(ex.Source);
+                    await OutputPane.Instance?.WriteAsync(ex.StackTrace);
                 }
 
                 this.hasDoneInitialCreateVisualsPass = true;
@@ -235,10 +232,10 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                ////await OutputPane.Instance?.WriteAsync("Error creating visuals");
-                ////await OutputPane.Instance?.WriteAsync(ex.Message);
-                ////await OutputPane.Instance?.WriteAsync(ex.Source);
-                ////await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                await OutputPane.Instance?.WriteAsync("Error creating visuals");
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
         }
 
