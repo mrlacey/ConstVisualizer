@@ -175,7 +175,7 @@ namespace ConstVisualizer
 
                     foreach (var (index, value) in matches)
                     {
-                        var qualNameStart = lineText.Substring(0, index).LastIndexOfAny(new[] { ' ', ':', ',', '"', '(', ')', '{', '}' });
+                        var qualNameStart = lineText.Substring(0, index).LastIndexOfAny(new[] { ' ', ':', ',', '"', '(', ')', '{', '}', '[', ']' });
 
                         var qualifier = lineText.Substring(qualNameStart + 1, index - qualNameStart - 1);
 
