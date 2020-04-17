@@ -11,7 +11,7 @@ namespace ConstVisualizer
 {
     public static class StringExtensions
     {
-        public static async Task<(int index, string value)> IndexOfAnyAsync(this string source, params string[] values)
+        public static async Task<(int index, string value, bool retry)> IndexOfAnyAsync(this string source, params string[] values)
         {
             try
             {
@@ -25,9 +25,22 @@ namespace ConstVisualizer
 
                 if (valuePositions.Any(v => v.Value > -1))
                 {
-                    var result = valuePositions.Where(v => v.Value > -1).OrderByDescending(v => v.Key.Length).FirstOrDefault();
+                    var found = valuePositions.Where(v => v.Value > -1)
+                                              .OrderBy(v => v.Value)
+                                              .ToList();
 
-                    return (result.Value, result.Key);
+                    if (found.Any())
+                    {
+                        var result = found.Where(f => f.Value == found.First().Value)
+                                          .OrderBy(v => v.Key.Length)
+                                          .First();
+
+                        return (result.Value, result.Key, found.Count(c => c.Value == result.Value) > 1);
+                    }
+                    else
+                    {
+                        return (-1, string.Empty, false);
+                    }
                 }
             }
             catch (Exception ex)
@@ -40,7 +53,7 @@ namespace ConstVisualizer
                 await OutputPane.Instance?.WriteAsync(ex.StackTrace);
             }
 
-            return (-1, string.Empty);
+            return (-1, string.Empty, false);
         }
 
         public static async Task<List<(int index, string value)>> GetAllWholeWordIndexesAsync(this string source, params string[] values)
@@ -51,19 +64,43 @@ namespace ConstVisualizer
             {
                 var startPos = 0;
 
+                var ignoreInRetries = new List<string>();
+
                 while (startPos > -1 && startPos <= source.Length)
                 {
-                    var (index, value) = await source.Substring(startPos).IndexOfAnyAsync(values);
+                    var toSearchFor = values.Where(v => !ignoreInRetries.Contains(v)).ToArray();
+
+                    var (index, value, retry) = await source.Substring(startPos)
+                                                            .IndexOfAnyAsync(toSearchFor);
 
                     if (index > -1)
                     {
-                        if (!char.IsLetterOrDigit(source[startPos + index - 1])
-                         && !char.IsLetterOrDigit(source[startPos + index + value.Length]))
+                        var prevChar = source[startPos + index - 1];
+
+                        // Account for matching text being at the end of the line.
+                        //  It won't be in normal use but could be in comments.
+                        var nextCharPos = startPos + index + value.Length;
+                        char nextChar = ' ';
+
+                        if (nextCharPos < source.Length)
+                        {
+                            nextChar = source[nextCharPos];
+                        }
+
+                        if (await source.IsValidVariableNameAsync(prevChar, nextChar))
                         {
                             result.Add((startPos + index, value));
                         }
 
-                        startPos = startPos + index + 1;
+                        if (retry)
+                        {
+                            ignoreInRetries.Add(value);
+                        }
+                        else
+                        {
+                            ignoreInRetries.Clear();
+                            startPos = startPos + index + 1;
+                        }
                     }
                     else
                     {
@@ -82,6 +119,54 @@ namespace ConstVisualizer
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Given a string, by looking at the characters either side of it, could it be a valid variable name
+        /// Valid names
+        /// - start with @, _, or letter
+        /// - other characters are: letter, digit, or underscore.
+        /// </summary>
+        public static async Task<bool> IsValidVariableNameAsync(this string source, char charBefore, char charAfter)
+        {
+            try
+            {
+                if (char.IsLetterOrDigit(charBefore))
+                {
+                    return false;
+                }
+                else if (charBefore == '_')
+                {
+                    return false;
+                }
+                else if (charBefore == '@')
+                {
+                    return false;
+                }
+
+                if (char.IsLetterOrDigit(charAfter))
+                {
+                    return false;
+                }
+                else if (charAfter == '_')
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
+                await OutputPane.Instance?.WriteAsync(source);
+                await OutputPane.Instance?.WriteAsync(charBefore.ToString());
+                await OutputPane.Instance?.WriteAsync(charAfter.ToString());
+                await OutputPane.Instance?.WriteAsync(ex.Message);
+                await OutputPane.Instance?.WriteAsync(ex.Source);
+                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+
+                return false;
+            }
         }
 
         public static async Task<List<int>> GetAllIndexesCaseInsensitiveAsync(this string source, string searchTerm)
