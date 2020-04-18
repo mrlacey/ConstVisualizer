@@ -7,7 +7,6 @@
         <MoreInfo>https://github.com/mrlacey/ConstVisualizer</MoreInfo>
         <License>Resources\LICENSE.txt</License>
         <Icon>Resources\Icon.png</Icon>
-        <Preview>true</Preview>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[16.0, 17.0)" />
