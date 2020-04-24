@@ -39,15 +39,28 @@ namespace ConstVisualizer
 
             var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
 
-            var projectGraph = workspace.CurrentSolution.GetProjectDependencyGraph();
+            if (workspace == null)
+            {
+                return;
+            }
+
+            var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
+
+            if (projectGraph == null)
+            {
+                return;
+            }
 
             foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
             {
-                Compilation projectCompilation = await workspace.CurrentSolution.GetProject(projectId).GetCompilationAsync();
+                Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
 
-                foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                if (projectCompilation != null)
                 {
-                    GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                    foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                    {
+                        GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                    }
                 }
             }
 
@@ -106,6 +119,7 @@ namespace ConstVisualizer
         public static void GetConstsFromSyntaxRoot(SyntaxNode root, string filePath)
         {
             var toRemove = new List<(string, string, string, string)>();
+
             foreach (var item in KnownConsts)
             {
                 if (item.source == filePath)
