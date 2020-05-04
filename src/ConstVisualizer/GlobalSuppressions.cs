@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1611:Element parameters should be documented", Justification = "<Pending>", Scope = "member", Target = "~M:ConstVisualizer.StringExtensions.IsValidVariableNameAsync(System.String,System.Char,System.Char)~System.Threading.Tasks.Task{System.Boolean}")]
-[assembly: SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1615:Element return value should be documented", Justification = "<Pending>", Scope = "member", Target = "~M:ConstVisualizer.StringExtensions.IsValidVariableNameAsync(System.String,System.Char,System.Char)~System.Threading.Tasks.Task{System.Boolean}")]
+[assembly: SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1611:Element parameters should be documented", Justification = "No value in documenting this.")]
+[assembly: SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1615:Element return value should be documented", Justification = "Don't need this documentation.")]

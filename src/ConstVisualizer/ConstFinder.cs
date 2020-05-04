@@ -118,6 +118,16 @@ namespace ConstVisualizer
 
         public static void GetConstsFromSyntaxRoot(SyntaxNode root, string filePath)
         {
+            // Avoid parsing generated code.
+            // Reduces overhead (as there may be lots)
+            // Avoids assets included with Android projects.
+            if (filePath.ToLowerInvariant().EndsWith(".designer.cs")
+             || filePath.ToLowerInvariant().EndsWith(".g.cs")
+             || filePath.ToLowerInvariant().EndsWith(".g.i.cs"))
+            {
+                return;
+            }
+
             var toRemove = new List<(string, string, string, string)>();
 
             foreach (var item in KnownConsts)
