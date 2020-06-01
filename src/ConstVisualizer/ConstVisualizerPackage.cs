@@ -30,7 +30,7 @@ namespace ConstVisualizer
             await this.LoadSystemTextSettingsAsync(cancellationToken);
 
             Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterOpenSolution += this.HandleOpenSolution;
-            Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterCloseSolution += this.HandleOpenSolution;
+            Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterCloseSolution += this.HandleCloseSolution;
 
             await this.SetUpRunningDocumentTableEventsAsync(cancellationToken).ConfigureAwait(false);
 
