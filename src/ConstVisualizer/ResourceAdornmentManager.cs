@@ -186,6 +186,18 @@ namespace ConstVisualizer
                             break;
                         }
 
+                        // Don't adorn a method that has the same name as a const
+                        if (lineText.Substring(index + value.Length, 2) == "()")
+                        {
+                            break;
+                        }
+
+                        // Don't adorn a part of a literal string that matches a const
+                        if (lineText[index - 1] == '"' || lineText[index + value.Length] == '"')
+                        {
+                            break;
+                        }
+
                         if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                         {
                             this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
