@@ -187,13 +187,25 @@ namespace ConstVisualizer
                         }
 
                         // Don't adorn a method that has the same name as a const
-                        if (lineText.Substring(index + value.Length, 2) == "()")
+                        if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == "()")
                         {
                             break;
                         }
 
                         // Don't adorn a part of a literal string that matches a const
-                        if (lineText[index - 1] == '"' || lineText[index + value.Length] == '"')
+                        if (lineText[index - 1] == '"' || (lineText.Length >= index + value.Length + 1 && lineText[index + value.Length] == '"'))
+                        {
+                            break;
+                        }
+
+                        // Don't adorn something after an indexer
+                        if (index > 2 && lineText.Substring(index - 2, 2) == "].")
+                        {
+                            break;
+                        }
+
+                        // Basic detection for comments (which shouldn't be adorned)
+                        if (lineText.TrimStart().StartsWith("//"))
                         {
                             break;
                         }
