@@ -211,7 +211,7 @@ namespace ConstVisualizer
                         }
 
                         //// Don't adorn anything with a space or dot before and a dot after. These are conincidental matches
-                        if (index > 1 && char.IsWhiteSpace(lineText[index - 1]) && lineText[index + displayText.Length] == '.')
+                        if (index > 1 && char.IsWhiteSpace(lineText[index - 1]) && lineText[index + value.Length] == '.')
                         {
                             break;
                         }
