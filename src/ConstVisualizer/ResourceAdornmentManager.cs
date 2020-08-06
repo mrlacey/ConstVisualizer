@@ -210,6 +210,12 @@ namespace ConstVisualizer
                             break;
                         }
 
+                        //// Don't adorn anything with a space or dot before and a dot after. These are conincidental matches
+                        if (index > 1 && char.IsWhiteSpace(lineText[index - 1]) && lineText[index + displayText.Length] == '.')
+                        {
+                            break;
+                        }
+
                         if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
                         {
                             this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
