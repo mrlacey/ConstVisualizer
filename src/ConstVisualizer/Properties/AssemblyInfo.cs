@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Matt Lacey Ltd.")]
 [assembly: AssemblyProduct("ConstVisualizer")]
-[assembly: AssemblyCopyright("Copyright © Matt Lacey Ltd. 2020")]
+[assembly: AssemblyCopyright("Copyright © Matt Lacey Ltd. 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
