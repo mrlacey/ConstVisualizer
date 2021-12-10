@@ -2,7 +2,6 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -172,7 +171,19 @@ namespace ConstVisualizer
                         {
                             if (IsConst(ldec))
                             {
-                                System.Diagnostics.Debug.WriteLine(ldec);
+                                if (vdec is VariableDeclarationSyntax vds)
+                                {
+                                    var qualification = GetQualification(vds);
+
+                                    foreach (var variable in vds.Variables)
+                                    {
+                                        KnownConsts.Add(
+                                            (variable.Identifier.Text,
+                                             qualification,
+                                             variable.Initializer.Value.ToString().Replace("\\\"", "\""),
+                                             filePath));
+                                    }
+                                }
                             }
                         }
                     }
@@ -180,7 +191,7 @@ namespace ConstVisualizer
             }
         }
 
-        public static string GetQualification(MemberDeclarationSyntax dec)
+        public static string GetQualification(CSharpSyntaxNode dec)
         {
             var result = string.Empty;
             var parent = dec.Parent;
