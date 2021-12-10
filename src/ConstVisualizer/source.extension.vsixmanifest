@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="ConstVisualizer.5bee6ae1-47a5-4255-897f-45f43d47b2be" Version="1.10" Language="en-US" Publisher="Matt Lacey" />
+        <Identity Id="ConstVisualizer.5bee6ae1-47a5-4255-897f-45f43d47b2be" Version="1.11" Language="en-US" Publisher="Matt Lacey" />
         <DisplayName>Const Visualizer</DisplayName>
         <Description xml:space="preserve">View the value of constants inline when they're used in code.</Description>
         <MoreInfo>https://github.com/mrlacey/ConstVisualizer</MoreInfo>
