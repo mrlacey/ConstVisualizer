@@ -52,7 +52,21 @@ namespace ConstVisualizer
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(CancellationToken.None);
 
-            this.pane?.OutputString($"{message}{Environment.NewLine}");
+            this.pane?.OutputStringThreadSafe($"{message}{Environment.NewLine}");
+        }
+
+        public void WriteLine(string message)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            this.pane?.OutputStringThreadSafe($"{message}{Environment.NewLine}");
+        }
+
+        public void Activate()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            this.pane?.Activate();
         }
     }
 }

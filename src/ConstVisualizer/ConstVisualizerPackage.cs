@@ -39,6 +39,8 @@ namespace ConstVisualizer
             await ConstFinder.TryParseSolutionAsync(componentModel);
 
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(ConstVisualizerPackage));
+
+            await SponsorRequestHelper.CheckIfNeedToShowAsync();
         }
 
         private void HandleOpenSolution(object sender, EventArgs e)
