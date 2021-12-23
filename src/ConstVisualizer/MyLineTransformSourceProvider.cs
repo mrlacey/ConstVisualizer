@@ -16,7 +16,9 @@ namespace ConstVisualizer
     {
         ILineTransformSource ILineTransformSourceProvider.Create(IWpfTextView view)
         {
-            ResourceAdornmentManager manager = view.Properties.GetOrCreateSingletonProperty<ResourceAdornmentManager>(() => new ResourceAdornmentManager(view));
+            ResourceAdornmentManager manager =
+                view.Properties.GetOrCreateSingletonProperty(
+                    () => new ResourceAdornmentManager(view));
             return new MyLineTransformSource(manager);
         }
     }
