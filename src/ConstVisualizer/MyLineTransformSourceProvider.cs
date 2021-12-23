@@ -10,9 +10,7 @@ using Microsoft.VisualStudio.Utilities;
 namespace ConstVisualizer
 {
     [Export(typeof(ILineTransformSourceProvider))]
-#pragma warning disable SA1133 // Do not combine attributes
     [ContentType("CSharp")]
-#pragma warning restore SA1133 // Do not combine attributes
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
     {
