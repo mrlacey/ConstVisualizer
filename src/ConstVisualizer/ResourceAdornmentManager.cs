@@ -186,6 +186,12 @@ namespace ConstVisualizer
                             break;
                         }
 
+                        // Don't adorn assigment of constant (or other variable with matching name)
+                        if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == " =")
+                        {
+                            break;
+                        }
+
                         // Don't adorn a method that has the same name as a const
                         if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == "()")
                         {
