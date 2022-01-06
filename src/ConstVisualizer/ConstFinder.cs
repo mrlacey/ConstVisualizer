@@ -109,24 +109,33 @@ namespace ConstVisualizer
 
         public static async Task<bool> TrackConstsInDocumentAsync(Document document)
         {
+            if (document == null)
+            {
+                return false;
+            }
+
             System.Diagnostics.Debug.WriteLine(document.FilePath);
 
-            if (document.FilePath.Contains(".g.")
+            if (document.FilePath == null
+                || document.FilePath.Contains(".g.")
                 || document.FilePath.Contains(".Designer."))
             {
                 return false;
             }
 
-            var result = true;
-
             if (document.TryGetSyntaxTree(out SyntaxTree _))
             {
                 var root = await document.GetSyntaxRootAsync();
 
+                if (root == null)
+                {
+                    return false;
+                }
+
                 GetConstsFromSyntaxRoot(root, document.FilePath);
             }
 
-            return result;
+            return true;
         }
 
         public static void GetConstsFromSyntaxRoot(SyntaxNode root, string filePath)
