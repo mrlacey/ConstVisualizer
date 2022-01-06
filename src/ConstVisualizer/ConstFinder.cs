@@ -165,6 +165,19 @@ namespace ConstVisualizer
                 KnownConsts.Remove(item);
             }
 
+            void AddToKnownConstants(string identifier, string qualifier, string value)
+            {
+                var formattedValue = value.Replace("\\\"", "\"");
+
+                if (formattedValue.StartsWith("nameof(")
+                 && formattedValue.EndsWith(")"))
+                {
+                    formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
+                }
+
+                KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
+            }
+
             foreach (var vdec in root.DescendantNodes().OfType<VariableDeclarationSyntax>())
             {
                 if (vdec != null)
@@ -179,11 +192,10 @@ namespace ConstVisualizer
 
                                 foreach (var variable in fds.Declaration.Variables)
                                 {
-                                    KnownConsts.Add(
-                                        (variable.Identifier.Text,
-                                         qualification,
-                                         variable.Initializer.Value.ToString().Replace("\\\"", "\""),
-                                         filePath));
+                                    AddToKnownConstants(
+                                        variable.Identifier.Text,
+                                        qualification,
+                                        variable.Initializer.Value.ToString());
                                 }
                             }
                         }
@@ -200,11 +212,10 @@ namespace ConstVisualizer
 
                                     foreach (var variable in vds.Variables)
                                     {
-                                        KnownConsts.Add(
-                                            (variable.Identifier.Text,
-                                             qualification,
-                                             variable.Initializer.Value.ToString().Replace("\\\"", "\""),
-                                             filePath));
+                                        AddToKnownConstants(
+                                            variable.Identifier.Text,
+                                            qualification,
+                                            variable.Initializer.Value.ToString());
                                     }
                                 }
                             }
