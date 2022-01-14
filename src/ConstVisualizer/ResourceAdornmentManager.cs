@@ -217,7 +217,11 @@ namespace ConstVisualizer
                         }
 
                         //// Don't adorn anything with a space or dot before and a dot after. These are conincidental matches
-                        if (index > 1 && char.IsWhiteSpace(lineText[index - 1]) && lineText[index + value.Length] == '.')
+                        //// check for `lineText.Length > ...` is to handle full line completion scenarios
+                        if (index > 1
+                            && char.IsWhiteSpace(lineText[index - 1])
+                            && lineText.Length > (index + value.Length)
+                            && lineText[index + value.Length] == '.')
                         {
                             break;
                         }
@@ -232,14 +236,15 @@ namespace ConstVisualizer
                             var brush = new SolidColorBrush(TextForegroundColor);
                             brush.Freeze();
 
-                            const double textBlockSizeToFontScaleFactor = 1.4;
-
+                            var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + ConstVisualizerPackage.Instance.Options.TopPadding + ConstVisualizerPackage.Instance.Options.BottomPadding;
                             var tb = new TextBlock
                             {
                                 Foreground = brush,
                                 Text = displayText,
                                 FontSize = TextSize,
-                                Height = TextSize * textBlockSizeToFontScaleFactor,
+                                Height = height,
+                                VerticalAlignment = VerticalAlignment.Top,
+                                Padding = new Thickness(0, ConstVisualizerPackage.Instance.Options.TopPadding, 0, 0),
                             };
 
                             this.DisplayedTextBlocks[lineNumber].Add((tb, value));

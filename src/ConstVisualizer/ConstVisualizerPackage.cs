@@ -17,11 +17,22 @@ namespace ConstVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.14")] // Info on this package for Help/About
+    [InstalledProductRegistration("#110", "#112", "1.15")] // Info on this package for Help/About
     [Guid(ConstVisualizerPackage.PackageGuidString)]
+    [ProvideOptionPage(typeof(OptionsGrid), "Const Visualizer", "General", 0, 0, true)]
     public sealed class ConstVisualizerPackage : AsyncPackage
     {
         public const string PackageGuidString = "3bc35430-0b58-47c6-bcc4-96411b5c41e8";
+
+        public static ConstVisualizerPackage Instance { get; private set; }
+
+        public OptionsGrid Options
+        {
+            get
+            {
+                return (OptionsGrid)this.GetDialogPage(typeof(OptionsGrid));
+            }
+        }
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
@@ -41,6 +52,8 @@ namespace ConstVisualizer
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(ConstVisualizerPackage));
 
             await SponsorRequestHelper.CheckIfNeedToShowAsync();
+
+            Instance = this;
         }
 
         private void HandleOpenSolution(object sender, EventArgs e)
