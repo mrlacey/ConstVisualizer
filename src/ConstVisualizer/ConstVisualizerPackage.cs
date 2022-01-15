@@ -17,7 +17,7 @@ namespace ConstVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.16")] // Info on this package for Help/About
+    [InstalledProductRegistration("#110", "#112", "1.17")] // Info on this package for Help/About
     [Guid(ConstVisualizerPackage.PackageGuidString)]
     [ProvideOptionPage(typeof(OptionsGrid), "Const Visualizer", "General", 0, 0, true)]
     public sealed class ConstVisualizerPackage : AsyncPackage

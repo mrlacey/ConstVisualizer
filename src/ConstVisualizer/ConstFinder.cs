@@ -145,88 +145,108 @@ namespace ConstVisualizer
                 return;
             }
 
-            // Avoid parsing generated code.
-            // Reduces overhead (as there may be lots)
-            // Avoids assets included with Android projects.
-            if (filePath.ToLowerInvariant().EndsWith(".designer.cs")
-             || filePath.ToLowerInvariant().EndsWith(".g.cs")
-             || filePath.ToLowerInvariant().EndsWith(".g.i.cs"))
+            try
             {
-                return;
-            }
-
-            var toRemove = new List<(string, string, string, string)>();
-
-            foreach (var item in KnownConsts)
-            {
-                if (item.source == filePath)
+                // Avoid parsing generated code.
+                // Reduces overhead (as there may be lots)
+                // Avoids assets included with Android projects.
+                if (filePath.ToLowerInvariant().EndsWith(".designer.cs")
+                 || filePath.ToLowerInvariant().EndsWith(".g.cs")
+                 || filePath.ToLowerInvariant().EndsWith(".g.i.cs"))
                 {
-                    toRemove.Add(item);
-                }
-            }
-
-            foreach (var item in toRemove)
-            {
-                KnownConsts.Remove(item);
-            }
-
-            void AddToKnownConstants(string identifier, string qualifier, string value)
-            {
-                var formattedValue = value.Replace("\\\"", "\"");
-
-                if (formattedValue.StartsWith("nameof(")
-                 && formattedValue.EndsWith(")"))
-                {
-                    formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
+                    return;
                 }
 
-                KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
-            }
+                var toRemove = new List<(string, string, string, string)>();
 
-            foreach (var vdec in root.DescendantNodes().OfType<VariableDeclarationSyntax>())
-            {
-                if (vdec != null)
+                foreach (var item in KnownConsts)
                 {
-                    if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
+                    if (item.source == filePath)
                     {
-                        if (IsConst(dec))
-                        {
-                            if (dec is FieldDeclarationSyntax fds)
-                            {
-                                var qualification = GetQualification(fds);
-
-                                foreach (var variable in fds.Declaration?.Variables)
-                                {
-                                    AddToKnownConstants(
-                                        variable.Identifier.Text,
-                                        qualification,
-                                        variable.Initializer.Value.ToString());
-                                }
-                            }
-                        }
+                        toRemove.Add(item);
                     }
-                    else
-                    {
-                        if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
-                        {
-                            if (IsConst(ldec))
-                            {
-                                if (vdec is VariableDeclarationSyntax vds)
-                                {
-                                    var qualification = GetQualification(vds);
+                }
 
-                                    foreach (var variable in vds.Variables)
+                foreach (var item in toRemove)
+                {
+                    KnownConsts.Remove(item);
+                }
+
+                void AddToKnownConstants(string identifier, string qualifier, string value)
+                {
+                    if (value == null)
+                    {
+                        return;
+                    }
+
+                    var formattedValue = value.Replace("\\\"", "\"");
+
+                    if (formattedValue.StartsWith("nameof(")
+                     && formattedValue.EndsWith(")"))
+                    {
+                        formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
+                    }
+
+                    KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
+                }
+
+                foreach (var vdec in root.DescendantNodes().OfType<VariableDeclarationSyntax>())
+                {
+                    if (vdec != null)
+                    {
+                        if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
+                        {
+                            if (IsConst(dec))
+                            {
+                                if (dec is FieldDeclarationSyntax fds)
+                                {
+                                    var qualification = GetQualification(fds);
+
+                                    foreach (var variable in fds.Declaration?.Variables)
                                     {
                                         AddToKnownConstants(
                                             variable.Identifier.Text,
                                             qualification,
-                                            variable.Initializer.Value.ToString());
+                                            variable.Initializer?.Value?.ToString());
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
+                            {
+                                if (IsConst(ldec))
+                                {
+                                    if (vdec is VariableDeclarationSyntax vds)
+                                    {
+                                        var qualification = GetQualification(vds);
+
+                                        foreach (var variable in vds.Variables)
+                                        {
+                                            AddToKnownConstants(
+                                                variable.Identifier.Text,
+                                                qualification,
+                                                variable.Initializer?.Value?.ToString());
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+            catch (Exception exc)
+            {
+                System.Diagnostics.Debug.WriteLine(exc);
+                System.Diagnostics.Debugger.Break();
+                OutputPane.Instance.WriteLine(string.Empty);
+                OutputPane.Instance.WriteLine("Exception 😢");
+                OutputPane.Instance.WriteLine("-----------");
+                OutputPane.Instance.WriteLine(exc.Message);
+                OutputPane.Instance.WriteLine(exc.Source);
+                OutputPane.Instance.WriteLine(exc.StackTrace);
+                OutputPane.Instance.WriteLine(string.Empty);
             }
         }
 
