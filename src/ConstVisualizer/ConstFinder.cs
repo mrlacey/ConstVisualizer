@@ -140,6 +140,11 @@ namespace ConstVisualizer
 
         public static void GetConstsFromSyntaxRoot(SyntaxNode root, string filePath)
         {
+            if (root == null || filePath == null)
+            {
+                return;
+            }
+
             // Avoid parsing generated code.
             // Reduces overhead (as there may be lots)
             // Avoids assets included with Android projects.
@@ -182,7 +187,7 @@ namespace ConstVisualizer
             {
                 if (vdec != null)
                 {
-                    if (vdec.Parent is MemberDeclarationSyntax dec)
+                    if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
                     {
                         if (IsConst(dec))
                         {
@@ -190,7 +195,7 @@ namespace ConstVisualizer
                             {
                                 var qualification = GetQualification(fds);
 
-                                foreach (var variable in fds.Declaration.Variables)
+                                foreach (var variable in fds.Declaration?.Variables)
                                 {
                                     AddToKnownConstants(
                                         variable.Identifier.Text,
@@ -202,7 +207,7 @@ namespace ConstVisualizer
                     }
                     else
                     {
-                        if (vdec.Parent is LocalDeclarationStatementSyntax ldec)
+                        if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
                         {
                             if (IsConst(ldec))
                             {
