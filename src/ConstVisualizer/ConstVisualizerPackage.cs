@@ -17,9 +17,9 @@ namespace ConstVisualizer
     [ProvideAutoLoad(UIContextGuids.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.17")] // Info on this package for Help/About
+    [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)] // Info on this package for Help/About
     [Guid(ConstVisualizerPackage.PackageGuidString)]
-    [ProvideOptionPage(typeof(OptionsGrid), "Const Visualizer", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(OptionsGrid), Vsix.Name, "General", 0, 0, true)]
     public sealed class ConstVisualizerPackage : AsyncPackage
     {
         public const string PackageGuidString = "3bc35430-0b58-47c6-bcc4-96411b5c41e8";

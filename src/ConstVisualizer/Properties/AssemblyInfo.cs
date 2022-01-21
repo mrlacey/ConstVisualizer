@@ -4,6 +4,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using ConstVisualizer;
 
 [assembly: AssemblyTitle("ConstVisualizer")]
 [assembly: AssemblyDescription("")]
@@ -14,5 +15,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyVersion("1.17.*")]
-[assembly: AssemblyFileVersion("1.17.0.0")]
+[assembly: AssemblyVersion(Vsix.Version)]
+[assembly: AssemblyFileVersion(Vsix.Version)]
