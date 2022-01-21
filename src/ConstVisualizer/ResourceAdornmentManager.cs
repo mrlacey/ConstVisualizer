@@ -131,7 +131,7 @@ namespace ConstVisualizer
             {
                 if (!ConstFinder.KnownConsts.Any())
                 {
-                    // If there are no known resource files then there's no point doing anything that follows.
+                    // If there are no known constants then there's no point doing anything that follows.
                     return;
                 }
 
@@ -216,7 +216,13 @@ namespace ConstVisualizer
                             break;
                         }
 
-                        //// Don't adorn anything with a space or dot before and a dot after. These are conincidental matches
+                        // Don't adorn something followed by an opening brace (can happen when a type has the same name as a known const)
+                        if (index > 2 && lineText.Substring(index - 2, 2) == " {")
+                        {
+                            break;
+                        }
+
+                        //// Don't adorn anything with a space or dot before and a dot after. These are coincidental matches
                         //// check for `lineText.Length > ...` is to handle full line completion scenarios
                         if (index > 1
                             && char.IsWhiteSpace(lineText[index - 1])
