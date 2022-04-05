@@ -296,7 +296,8 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                ExceptionHelper.Log(exc);
+                System.Diagnostics.Debug.WriteLine(exc);
+                System.Diagnostics.Debugger.Break();
             }
 
             return null;

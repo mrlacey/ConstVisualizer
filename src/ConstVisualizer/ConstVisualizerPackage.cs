@@ -134,8 +134,7 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                await OutputPane.Instance?.WriteAsync("Error in LoadSystemTextSettingsAsync");
-                ExceptionHelper.Log(exc);
+                ExceptionHelper.Log(exc, "Error in LoadSystemTextSettingsAsync");
             }
         }
     }
