@@ -3,31 +3,37 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.VisualStudio.ComponentModelHost;
-using Microsoft.VisualStudio.LanguageServices;
-using Microsoft.VisualStudio.Shell;
-using Task = System.Threading.Tasks.Task;
 
 namespace ConstVisualizer
 {
     public static class ExceptionHelper
     {
-        public static void Log(Exception exc)
+        public static void Log(Exception exc, params string[] extraInfo)
         {
             System.Diagnostics.Debug.WriteLine(exc);
+
+            foreach (var item in extraInfo)
+            {
+                System.Diagnostics.Debug.WriteLine(item);
+            }
+
             System.Diagnostics.Debugger.Break();
+
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             OutputPane.Instance?.WriteLine(string.Empty);
             OutputPane.Instance?.WriteLine("Exception 😢");
             OutputPane.Instance?.WriteLine("-----------");
             OutputPane.Instance?.WriteLine(exc.Message);
             OutputPane.Instance?.WriteLine(exc.Source);
             OutputPane.Instance?.WriteLine(exc.StackTrace);
+            OutputPane.Instance?.WriteLine(string.Empty);
+
+            foreach (var item in extraInfo)
+            {
+                OutputPane.Instance?.WriteLine(item);
+            }
+
             OutputPane.Instance?.WriteLine(string.Empty);
         }
     }

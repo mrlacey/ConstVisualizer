@@ -2,7 +2,6 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
-using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,22 +45,15 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                await OutputPane.Instance?.WriteAsync("Error in IndexOfAnyAsync");
-                await OutputPane.Instance?.WriteAsync(source);
-                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                ExceptionHelper.Log(ex);
+                ExceptionHelper.Log(ex, "Error in IndexOfAnyAsync", source, string.Join("|", values));
             }
 
-            return (-1, string.Empty, false);
+            return await Task.FromResult((-1, string.Empty, false));
         }
 
         public static async Task<List<(int index, string value)>> GetAllWholeWordIndexesAsync(this string source, params string[] values)
         {
             var result = new List<(int, string)>();
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             try
             {
@@ -113,12 +105,7 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                await OutputPane.Instance?.WriteAsync("Error in GetAllWholeWordIndexesAsync");
-                await OutputPane.Instance?.WriteAsync(source);
-                await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                ExceptionHelper.Log(ex);
+                ExceptionHelper.Log(ex, "Error in GetAllWholeWordIndexesAsync", source, string.Join("|", values));
             }
 
             return result;
@@ -132,44 +119,52 @@ namespace ConstVisualizer
         /// </summary>
         public static async Task<bool> IsValidVariableNameAsync(this string source, char charBefore, char charAfter)
         {
+            bool? result = null;
+
             try
             {
                 if (char.IsLetterOrDigit(charBefore))
                 {
-                    return false;
+                    result = false;
                 }
                 else if (charBefore == '_')
                 {
-                    return false;
+                    result = false;
                 }
                 else if (charBefore == '@')
                 {
-                    return false;
+                    result = false;
+                }
+                else
+                {
+                    if (char.IsLetterOrDigit(charAfter))
+                    {
+                        result = false;
+                    }
+                    else if (charAfter == '_')
+                    {
+                        result = false;
+                    }
                 }
 
-                if (char.IsLetterOrDigit(charAfter))
-                {
-                    return false;
+                if (!result.HasValue)
+                        {
+                    result = true;
                 }
-                else if (charAfter == '_')
-                {
-                    return false;
-                }
-
-                return true;
             }
             catch (Exception ex)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                ExceptionHelper.Log(
+                    ex,
+                    "Error in GetAllIndexesCaseInsensitiveAsync",
+                    source,
+                    charBefore.ToString(),
+                    charAfter.ToString());
 
-                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
-                await OutputPane.Instance?.WriteAsync(source);
-                await OutputPane.Instance?.WriteAsync(charBefore.ToString());
-                await OutputPane.Instance?.WriteAsync(charAfter.ToString());
-                ExceptionHelper.Log(ex);
-
-                return false;
+                result = false;
             }
+
+            return await Task.FromResult(result ?? false);
         }
 
         public static async Task<List<int>> GetAllIndexesCaseInsensitiveAsync(this string source, string searchTerm)
@@ -197,15 +192,10 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
-                await OutputPane.Instance?.WriteAsync(source);
-                await OutputPane.Instance?.WriteAsync(searchTerm);
-                ExceptionHelper.Log(ex);
+                ExceptionHelper.Log(ex, "Error in GetAllIndexesCaseInsensitiveAsync", source, searchTerm);
             }
 
-            return result;
+            return await Task.FromResult(result);
         }
     }
 }
