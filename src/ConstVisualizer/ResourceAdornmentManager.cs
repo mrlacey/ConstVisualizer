@@ -8,6 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -142,6 +143,8 @@ namespace ConstVisualizer
                 {
                     return;
                 }
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
                 // The extent will include all of a collapsed section
                 if (lineText.Contains(Environment.NewLine))
@@ -279,10 +282,10 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
                 await OutputPane.Instance?.WriteAsync("Error creating visuals");
-                await OutputPane.Instance?.WriteAsync(ex.Message);
-                await OutputPane.Instance?.WriteAsync(ex.Source);
-                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                ExceptionHelper.Log(ex);
             }
         }
 

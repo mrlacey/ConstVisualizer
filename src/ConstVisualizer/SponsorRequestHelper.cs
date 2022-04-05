@@ -29,23 +29,23 @@ namespace ConstVisualizer
 
         private static async Task ShowThanksForSponsorshipMessageAsync()
         {
-            await OutputPane.Instance.WriteAsync("Thank you for your sponsorship. It really helps.");
-            await OutputPane.Instance.WriteAsync("If you have ideas for new features or suggestions for new features");
-            await OutputPane.Instance.WriteAsync("please raise an issue at https://github.com/mrlacey/ConstVisualizer/issues");
-            await OutputPane.Instance.WriteAsync(string.Empty);
+            await OutputPane.Instance?.WriteAsync("Thank you for your sponsorship. It really helps.");
+            await OutputPane.Instance?.WriteAsync("If you have ideas for new features or suggestions for new features");
+            await OutputPane.Instance?.WriteAsync("please raise an issue at https://github.com/mrlacey/ConstVisualizer/issues");
+            await OutputPane.Instance?.WriteAsync(string.Empty);
         }
 
         private static async Task ShowPromptForSponsorshipAsync()
         {
-            await OutputPane.Instance.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension (Const Visualizer).");
-            await OutputPane.Instance.WriteAsync("I'm happy that the extensions I've created have been able to help you and many others");
-            await OutputPane.Instance.WriteAsync("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
-            await OutputPane.Instance.WriteAsync(string.Empty);
-            await OutputPane.Instance.WriteAsync("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
-            await OutputPane.Instance.WriteAsync(string.Empty);
-            await OutputPane.Instance.WriteAsync("If you become a sponsor, I'll tell you how to hide this message too. ;)");
-            await OutputPane.Instance.WriteAsync(string.Empty);
-            await OutputPane.Instance.ActivateAsync();
+            await OutputPane.Instance?.WriteAsync("Sorry to interrupt. I know your time is busy, presumably that's why you installed this extension (Const Visualizer).");
+            await OutputPane.Instance?.WriteAsync("I'm happy that the extensions I've created have been able to help you and many others");
+            await OutputPane.Instance?.WriteAsync("but I also need to make a living, and two years without work and extended periods of illness have been a challenge. - I didn't qualify for any government support either. :(");
+            await OutputPane.Instance?.WriteAsync(string.Empty);
+            await OutputPane.Instance?.WriteAsync("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
+            await OutputPane.Instance?.WriteAsync(string.Empty);
+            await OutputPane.Instance?.WriteAsync("If you become a sponsor, I'll tell you how to hide this message too. ;)");
+            await OutputPane.Instance?.WriteAsync(string.Empty);
+            await OutputPane.Instance?.ActivateAsync();
         }
     }
 }

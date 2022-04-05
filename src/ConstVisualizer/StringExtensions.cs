@@ -2,6 +2,7 @@
 // Copyright (c) Matt Lacey. All rights reserved.
 // </copyright>
 
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,12 +46,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
                 await OutputPane.Instance?.WriteAsync("Error in IndexOfAnyAsync");
                 await OutputPane.Instance?.WriteAsync(source);
                 await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                await OutputPane.Instance?.WriteAsync(ex.Message);
-                await OutputPane.Instance?.WriteAsync(ex.Source);
-                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                ExceptionHelper.Log(ex);
             }
 
             return (-1, string.Empty, false);
@@ -59,6 +60,8 @@ namespace ConstVisualizer
         public static async Task<List<(int index, string value)>> GetAllWholeWordIndexesAsync(this string source, params string[] values)
         {
             var result = new List<(int, string)>();
+
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             try
             {
@@ -110,12 +113,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
                 await OutputPane.Instance?.WriteAsync("Error in GetAllWholeWordIndexesAsync");
                 await OutputPane.Instance?.WriteAsync(source);
                 await OutputPane.Instance?.WriteAsync(string.Join("|", values));
-                await OutputPane.Instance?.WriteAsync(ex.Message);
-                await OutputPane.Instance?.WriteAsync(ex.Source);
-                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                ExceptionHelper.Log(ex);
             }
 
             return result;
@@ -157,13 +160,13 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
                 await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
                 await OutputPane.Instance?.WriteAsync(source);
                 await OutputPane.Instance?.WriteAsync(charBefore.ToString());
                 await OutputPane.Instance?.WriteAsync(charAfter.ToString());
-                await OutputPane.Instance?.WriteAsync(ex.Message);
-                await OutputPane.Instance?.WriteAsync(ex.Source);
-                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                ExceptionHelper.Log(ex);
 
                 return false;
             }
@@ -194,12 +197,12 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
                 await OutputPane.Instance?.WriteAsync("Error in GetAllIndexesCaseInsensitiveAsync");
                 await OutputPane.Instance?.WriteAsync(source);
                 await OutputPane.Instance?.WriteAsync(searchTerm);
-                await OutputPane.Instance?.WriteAsync(ex.Message);
-                await OutputPane.Instance?.WriteAsync(ex.Source);
-                await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+                ExceptionHelper.Log(ex);
             }
 
             return result;

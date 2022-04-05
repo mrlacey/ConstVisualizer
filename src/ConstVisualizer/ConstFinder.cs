@@ -32,39 +32,52 @@ namespace ConstVisualizer
 
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
-            if (componentModel == null)
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            try
             {
-                componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
-            }
-
-            var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
-
-            if (workspace == null)
-            {
-                return;
-            }
-
-            var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
-
-            if (projectGraph == null)
-            {
-                return;
-            }
-
-            foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
-            {
-                Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
-
-                if (projectCompilation != null)
+                if (componentModel == null)
                 {
-                    foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                    componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
+                }
+
+                var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
+
+                if (workspace == null)
+                {
+                    return;
+                }
+
+                var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
+
+                if (projectGraph == null)
+                {
+                    return;
+                }
+
+                foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
+                {
+                    Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
+
+                    if (projectCompilation != null)
                     {
-                        GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                        foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                        {
+                            GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
+                        }
                     }
                 }
-            }
 
-            HasParsedSolution = true;
+                HasParsedSolution = true;
+            }
+            catch (Exception exc)
+            {
+                // Exceptions can happen in the above when a solution is modified before the package has finished loading :(
+                ExceptionHelper.Log(exc);
+
+                // Recovery from the above would be very difficult so easiest to prompt to trigger for reparsing later.
+                HasParsedSolution = true;
+            }
         }
 
         public static async Task ReloadConstsAsync()
@@ -101,9 +114,7 @@ namespace ConstVisualizer
             catch (Exception exc)
             {
                 await OutputPane.Instance?.WriteAsync($"Error in {nameof(ReloadConstsAsync)}");
-                await OutputPane.Instance?.WriteAsync(exc.Message);
-                await OutputPane.Instance?.WriteAsync(exc.Source);
-                await OutputPane.Instance?.WriteAsync(exc.StackTrace);
+                ExceptionHelper.Log(exc);
             }
         }
 
@@ -113,6 +124,8 @@ namespace ConstVisualizer
             {
                 return false;
             }
+
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             System.Diagnostics.Debug.WriteLine(document.FilePath);
 
@@ -238,15 +251,7 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                System.Diagnostics.Debug.WriteLine(exc);
-                System.Diagnostics.Debugger.Break();
-                OutputPane.Instance.WriteLine(string.Empty);
-                OutputPane.Instance.WriteLine("Exception 😢");
-                OutputPane.Instance.WriteLine("-----------");
-                OutputPane.Instance.WriteLine(exc.Message);
-                OutputPane.Instance.WriteLine(exc.Source);
-                OutputPane.Instance.WriteLine(exc.StackTrace);
-                OutputPane.Instance.WriteLine(string.Empty);
+                ExceptionHelper.Log(exc);
             }
         }
 
@@ -291,7 +296,7 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                System.Diagnostics.Debug.WriteLine(exc);
+                ExceptionHelper.Log(exc);
             }
 
             return null;
