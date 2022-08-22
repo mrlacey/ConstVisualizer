@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -33,6 +34,9 @@ namespace ConstVisualizer
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var timer = new Stopwatch();
+            timer.Start();
 
             try
             {
@@ -77,6 +81,12 @@ namespace ConstVisualizer
 
                 // Recovery from the above would be very difficult so easiest to prompt to trigger for reparsing later.
                 HasParsedSolution = true;
+            }
+            finally
+            {
+                timer.Stop();
+
+                OutputPane.Instance.WriteLine($"Parse duration: {timer.Elapsed}");
             }
         }
 
@@ -251,6 +261,7 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
+                ThreadHelper.ThrowIfNotOnUIThread();
                 ExceptionHelper.Log(exc);
             }
         }
