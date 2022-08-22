@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell;
 
 namespace ConstVisualizer
 {
@@ -45,6 +46,7 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(ex, "Error in IndexOfAnyAsync", source, string.Join("|", values));
             }
 
@@ -105,6 +107,7 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(ex, "Error in GetAllWholeWordIndexesAsync", source, string.Join("|", values));
             }
 
@@ -148,12 +151,13 @@ namespace ConstVisualizer
                 }
 
                 if (!result.HasValue)
-                        {
+                {
                     result = true;
                 }
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(
                     ex,
                     "Error in GetAllIndexesCaseInsensitiveAsync",
@@ -192,6 +196,7 @@ namespace ConstVisualizer
             }
             catch (Exception ex)
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(ex, "Error in GetAllIndexesCaseInsensitiveAsync", source, searchTerm);
             }
 
