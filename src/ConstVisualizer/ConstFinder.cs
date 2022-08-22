@@ -45,12 +45,16 @@ namespace ConstVisualizer
                     componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
                 }
 
+                ////OutputPane.Instance.WriteLine($"Parse step 1 duration: {timer.Elapsed}");
+
                 var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
 
                 if (workspace == null)
                 {
                     return;
                 }
+
+                ////OutputPane.Instance.WriteLine($"Parse step 2 duration: {timer.Elapsed}");
 
                 var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
 
@@ -59,11 +63,19 @@ namespace ConstVisualizer
                     return;
                 }
 
+                ////OutputPane.Instance.WriteLine($"Parse step 3 duration: {timer.Elapsed}");
+
                 await Task.Yield();
 
-                foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
+                var projects = projectGraph.GetTopologicallySortedProjects();
+
+                ////OutputPane.Instance.WriteLine($"Parse step 4 duration: {timer.Elapsed}");
+
+                foreach (ProjectId projectId in projects)
                 {
                     Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
+
+                    ////OutputPane.Instance.WriteLine($"Parse loop step duration: {timer.Elapsed} ({projectId})");
 
                     if (projectCompilation != null)
                     {
@@ -90,7 +102,7 @@ namespace ConstVisualizer
             {
                 timer.Stop();
 
-                OutputPane.Instance.WriteLine($"Parse duration: {timer.Elapsed}");
+                await OutputPane.Instance.WriteAsync($"Parse total duration: {timer.Elapsed}");
             }
         }
 
