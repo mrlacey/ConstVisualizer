@@ -59,6 +59,8 @@ namespace ConstVisualizer
                     return;
                 }
 
+                await Task.Yield();
+
                 foreach (ProjectId projectId in projectGraph.GetTopologicallySortedProjects())
                 {
                     Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
@@ -67,6 +69,8 @@ namespace ConstVisualizer
                     {
                         foreach (var compiledTree in projectCompilation.SyntaxTrees)
                         {
+                            await Task.Yield();
+
                             GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
                         }
                     }
