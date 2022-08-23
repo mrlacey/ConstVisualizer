@@ -6,7 +6,7 @@ namespace ConstVisualizer
 {
     public static class Constants
     {
-        // This si to reflect what happens internally - source uncertain
+        // This is to reflect what happens internally - source uncertain
         public const double TextBlockSizeToFontScaleFactor = 1.4;
     }
 }
