@@ -17,7 +17,9 @@ namespace ConstVisualizer
                 System.Diagnostics.Debug.WriteLine(item);
             }
 
+#if DEBUG
             System.Diagnostics.Debugger.Break();
+#endif
 
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -27,6 +29,12 @@ namespace ConstVisualizer
             OutputPane.Instance?.WriteLine(exc.Message);
             OutputPane.Instance?.WriteLine(exc.Source);
             OutputPane.Instance?.WriteLine(exc.StackTrace);
+
+            foreach (var item in extraInfo)
+            {
+                OutputPane.Instance?.WriteLine(item);
+            }
+
             OutputPane.Instance?.WriteLine(string.Empty);
 
             foreach (var item in extraInfo)

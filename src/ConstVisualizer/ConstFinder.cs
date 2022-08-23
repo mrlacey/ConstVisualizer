@@ -118,7 +118,7 @@ namespace ConstVisualizer
                 {
                     var dte = Package.GetGlobalService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
 
-                    var activeDocument = SafeGetActiveDocument(dte);
+                    var activeDocument = await SafeGetActiveDocumentAsync(dte);
 
                     if (activeDocument != null)
                     {
@@ -313,7 +313,7 @@ namespace ConstVisualizer
             return node.ChildTokens().Any(t => t.IsKind(SyntaxKind.ConstKeyword));
         }
 
-        internal static EnvDTE.Document SafeGetActiveDocument(EnvDTE.DTE dte)
+        internal static async Task<EnvDTE.Document> SafeGetActiveDocumentAsync(EnvDTE.DTE dte)
         {
             try
             {
@@ -323,8 +323,8 @@ namespace ConstVisualizer
             }
             catch (Exception exc)
             {
-                System.Diagnostics.Debug.WriteLine(exc);
-                System.Diagnostics.Debugger.Break();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                ExceptionHelper.Log(exc);
             }
 
             return null;
