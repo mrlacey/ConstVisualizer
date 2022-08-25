@@ -319,12 +319,19 @@ namespace ConstVisualizer
             {
                 // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
                 // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
-                return dte?.ActiveDocument;
+                return await Task.FromResult(dte?.ActiveDocument);
             }
             catch (Exception exc)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                ExceptionHelper.Log(exc);
+                // Don't call ExceptionHelper.Log as this is really common--see above
+                ////await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                ////ExceptionHelper.Log(exc);
+
+                System.Diagnostics.Debug.WriteLine(exc);
+
+#if DEBUG
+                System.Diagnostics.Debugger.Break();
+#endif
             }
 
             return null;
