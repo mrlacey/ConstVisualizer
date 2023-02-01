@@ -11,7 +11,7 @@ namespace ConstVisualizer
         public const string Name = "Const Visualizer";
         public const string Description = @"View the value of constants inline when they're used in code.";
         public const string Language = "en-US";
-        public const string Version = "1.22";
+        public const string Version = "1.23";
         public const string Author = "Matt Lacey";
         public const string Tags = "";
     }
