@@ -8,11 +8,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
+using CsharpCodeAnalysis = Microsoft.CodeAnalysis.CSharp;
+using CsharpSyntax = Microsoft.CodeAnalysis.CSharp.Syntax;
+using VBasicCodeAnalysis = Microsoft.CodeAnalysis.VisualBasic;
+using VBasicSyntax = Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Task = System.Threading.Tasks.Task;
 
 namespace ConstVisualizer
@@ -21,13 +23,13 @@ namespace ConstVisualizer
     {
         public static bool HasParsedSolution { get; private set; } = false;
 
-        public static List<(string key, string qualification, string value, string source)> KnownConsts { get; } = new List<(string key, string qualification, string value, string source)>();
+        public static List<(string Key, string Qualification, string Value, string Source)> KnownConsts { get; } = new List<(string Key, string Qualification, string Value, string Source)>();
 
         public static string[] SearchValues
         {
             get
             {
-                return KnownConsts.Select(c => c.key).ToArray();
+                return KnownConsts.Select(c => c.Key).ToArray();
             }
         }
 
@@ -35,7 +37,7 @@ namespace ConstVisualizer
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            var timer = new Stopwatch();
+            Stopwatch timer = new Stopwatch();
             timer.Start();
 
             try
@@ -47,7 +49,7 @@ namespace ConstVisualizer
 
                 ////OutputPane.Instance.WriteLine($"Parse step 1 duration: {timer.Elapsed}");
 
-                var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
+                Workspace workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
 
                 if (workspace == null)
                 {
@@ -56,7 +58,7 @@ namespace ConstVisualizer
 
                 ////OutputPane.Instance.WriteLine($"Parse step 2 duration: {timer.Elapsed}");
 
-                var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
+                ProjectDependencyGraph projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
 
                 if (projectGraph == null)
                 {
@@ -67,7 +69,7 @@ namespace ConstVisualizer
 
                 await Task.Yield();
 
-                var projects = projectGraph.GetTopologicallySortedProjects();
+                IEnumerable<ProjectId> projects = projectGraph.GetTopologicallySortedProjects();
 
                 ////OutputPane.Instance.WriteLine($"Parse step 4 duration: {timer.Elapsed}");
 
@@ -79,10 +81,9 @@ namespace ConstVisualizer
 
                     if (projectCompilation != null)
                     {
-                        foreach (var compiledTree in projectCompilation.SyntaxTrees)
+                        foreach (SyntaxTree compiledTree in projectCompilation.SyntaxTrees)
                         {
                             await Task.Yield();
-
                             GetConstsFromSyntaxRoot(await compiledTree.GetRootAsync(), compiledTree.FilePath);
                         }
                     }
@@ -112,21 +113,21 @@ namespace ConstVisualizer
 
             try
             {
-                var componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
+                IComponentModel componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
 
                 if (ConstFinder.HasParsedSolution)
                 {
-                    var dte = Package.GetGlobalService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
+                    EnvDTE.DTE dte = Package.GetGlobalService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
 
-                    var activeDocument = await SafeGetActiveDocumentAsync(dte);
+                    EnvDTE.Document activeDocument = await SafeGetActiveDocumentAsync(dte);
 
                     if (activeDocument != null)
                     {
-                        var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
-                        var documentId = workspace.CurrentSolution.GetDocumentIdsWithFilePath(activeDocument.FullName).FirstOrDefault();
+                        Workspace workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
+                        DocumentId documentId = workspace.CurrentSolution.GetDocumentIdsWithFilePath(activeDocument.FullName).FirstOrDefault();
                         if (documentId != null)
                         {
-                            var document = workspace.CurrentSolution.GetDocument(documentId);
+                            Document document = workspace.CurrentSolution.GetDocument(documentId);
 
                             await TrackConstsInDocumentAsync(document);
                         }
@@ -164,7 +165,7 @@ namespace ConstVisualizer
 
             if (document.TryGetSyntaxTree(out SyntaxTree _))
             {
-                var root = await document.GetSyntaxRootAsync();
+                SyntaxNode root = await document.GetSyntaxRootAsync();
 
                 if (root == null)
                 {
@@ -190,23 +191,24 @@ namespace ConstVisualizer
                 // Reduces overhead (as there may be lots)
                 // Avoids assets included with Android projects.
                 if (filePath.ToLowerInvariant().EndsWith(".designer.cs")
+                 || filePath.ToLowerInvariant().EndsWith(".designer.vb")
                  || filePath.ToLowerInvariant().EndsWith(".g.cs")
                  || filePath.ToLowerInvariant().EndsWith(".g.i.cs"))
                 {
                     return;
                 }
 
-                var toRemove = new List<(string, string, string, string)>();
+                List<(string, string, string, string)> toRemove = new List<(string, string, string, string)>();
 
-                foreach (var item in KnownConsts)
+                foreach ((string Key, string Qualification, string Value, string Source) item in KnownConsts)
                 {
-                    if (item.source == filePath)
+                    if (item.Source == filePath)
                     {
                         toRemove.Add(item);
                     }
                 }
 
-                foreach (var item in toRemove)
+                foreach ((string, string, string, string) item in toRemove)
                 {
                     KnownConsts.Remove(item);
                 }
@@ -218,10 +220,10 @@ namespace ConstVisualizer
                         return;
                     }
 
-                    var formattedValue = value.Replace("\\\"", "\"");
+                    string formattedValue = value.Replace("\\\"", "\"");
 
-                    if (formattedValue.StartsWith("nameof(")
-                     && formattedValue.EndsWith(")"))
+                    if (formattedValue.StartsWith("nameof(", StringComparison.OrdinalIgnoreCase)
+                    && formattedValue.EndsWith(")"))
                     {
                         formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
                     }
@@ -229,19 +231,19 @@ namespace ConstVisualizer
                     KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
                 }
 
-                foreach (var vdec in root.DescendantNodes().OfType<VariableDeclarationSyntax>())
+                foreach (CsharpSyntax.VariableDeclarationSyntax vdec in root.DescendantNodes().OfType<CsharpSyntax.VariableDeclarationSyntax>())
                 {
                     if (vdec != null)
                     {
-                        if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
+                        if (vdec.Parent != null && vdec.Parent is CsharpSyntax.MemberDeclarationSyntax dec)
                         {
                             if (IsConst(dec))
                             {
-                                if (dec is FieldDeclarationSyntax fds)
+                                if (dec is CsharpSyntax.FieldDeclarationSyntax fds)
                                 {
-                                    var qualification = GetQualification(fds);
+                                    string qualification = GetQualificationCSharp(fds);
 
-                                    foreach (var variable in fds.Declaration?.Variables)
+                                    foreach (CsharpSyntax.VariableDeclaratorSyntax variable in fds.Declaration?.Variables)
                                     {
                                         AddToKnownConstants(
                                             variable.Identifier.Text,
@@ -253,20 +255,68 @@ namespace ConstVisualizer
                         }
                         else
                         {
-                            if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
+                            if (vdec.Parent != null && vdec.Parent is CsharpSyntax.LocalDeclarationStatementSyntax ldec)
                             {
                                 if (IsConst(ldec))
                                 {
-                                    if (vdec is VariableDeclarationSyntax vds)
+                                    if (vdec is CsharpSyntax.VariableDeclarationSyntax vds)
                                     {
-                                        var qualification = GetQualification(vds);
+                                        string qualification = GetQualificationCSharp(vds);
 
-                                        foreach (var variable in vds.Variables)
+                                        foreach (CsharpSyntax.VariableDeclaratorSyntax variable in vds.Variables)
                                         {
                                             AddToKnownConstants(
                                                 variable.Identifier.Text,
                                                 qualification,
                                                 variable.Initializer?.Value?.ToString());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                foreach (VBasicSyntax.VariableDeclaratorSyntax vdec in root.DescendantNodes().OfType<VBasicSyntax.VariableDeclaratorSyntax>())
+                {
+                    if (vdec != null)
+                    {
+                        if (vdec.Parent != null && vdec.Parent is VBasicSyntax.DeclarationStatementSyntax dec)
+                        {
+                            if (IsConst(dec))
+                            {
+                                if (dec is VBasicSyntax.FieldDeclarationSyntax fds)
+                                {
+                                    string qualification = GetQualificationVisualBasic(fds);
+
+                                    foreach (VBasicSyntax.VariableDeclaratorSyntax variable in fds.Declarators)
+                                    {
+                                        foreach (VBasicSyntax.ModifiedIdentifierSyntax name in variable.Names)
+                                        {
+                                            AddToKnownConstants(
+                                                name.Identifier.Text,
+                                                qualification,
+                                                variable.Initializer?.Value?.ToString());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (vdec.Parent != null && vdec.Parent is VBasicSyntax.LocalDeclarationStatementSyntax ldec)
+                            {
+                                if (IsConst(ldec))
+                                {
+                                    if (vdec is VBasicSyntax.VariableDeclaratorSyntax vds)
+                                    {
+                                        string qualification = GetQualificationVisualBasic(vds);
+                                        foreach (VBasicSyntax.ModifiedIdentifierSyntax name in vds.Names)
+                                        {
+                                            AddToKnownConstants(
+                                                name.Identifier.Text,
+                                                qualification,
+                                                vds.Initializer?.Value?.ToString());
                                         }
                                     }
                                 }
@@ -282,19 +332,19 @@ namespace ConstVisualizer
             }
         }
 
-        public static string GetQualification(CSharpSyntaxNode dec)
+        public static string GetQualificationCSharp(CsharpCodeAnalysis.CSharpSyntaxNode dec)
         {
-            var result = string.Empty;
-            var parent = dec.Parent;
+            string result = string.Empty;
+            SyntaxNode parent = dec.Parent;
 
             while (parent != null)
             {
-                if (parent is ClassDeclarationSyntax cds)
+                if (parent is CsharpSyntax.TypeDeclarationSyntax tds)
                 {
-                    result = $"{cds.Identifier.ValueText}.{result}";
-                    parent = cds.Parent;
+                    result = $"{tds.Identifier.ValueText}.{result}";
+                    parent = tds.Parent;
                 }
-                else if (parent is NamespaceDeclarationSyntax nds)
+                else if (parent is CsharpSyntax.NamespaceDeclarationSyntax nds)
                 {
                     result = $"{nds.Name}.{result}";
                     parent = nds.Parent;
@@ -308,18 +358,47 @@ namespace ConstVisualizer
             return result.TrimEnd('.');
         }
 
+        public static string GetQualificationVisualBasic(VBasicCodeAnalysis.VisualBasicSyntaxNode dec)
+        {
+            string result = string.Empty;
+            SyntaxNode parent = dec.Parent;
+
+            while (parent != null)
+            {
+                if (parent is VBasicSyntax.TypeBlockSyntax tbs)
+                {
+                    result = $"{tbs.BlockStatement.Identifier.ValueText}.{result}";
+                    parent = tbs.Parent;
+                }
+                else if (parent is VBasicSyntax.NamespaceBlockSyntax nbs)
+                {
+                    result = $"{nbs.NamespaceStatement.Name}.{result}";
+                    parent = nbs.Parent;
+                }
+                else
+                {
+                    parent = parent.Parent;
+                }
+            }
+
+            return result.TrimEnd('.');
+        }
+
         public static bool IsConst(SyntaxNode node)
         {
-            return node.ChildTokens().Any(t => t.IsKind(SyntaxKind.ConstKeyword));
+            return node.ChildTokens().Any(t => t.IsKind(CsharpCodeAnalysis.SyntaxKind.ConstKeyword) ||
+                                               t.IsKind(VBasicCodeAnalysis.SyntaxKind.ConstKeyword));
         }
 
         internal static async Task<EnvDTE.Document> SafeGetActiveDocumentAsync(EnvDTE.DTE dte)
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             try
             {
                 // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
                 // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
-                return await Task.FromResult(dte?.ActiveDocument);
+                EnvDTE.Document doc = await Task.FromResult(dte?.ActiveDocument);
+                return doc != null && (doc.Language == "CSharp" || doc.Language == "Basic") ? doc : null;
             }
             catch (Exception exc)
             {
@@ -345,19 +424,19 @@ namespace ConstVisualizer
 
         internal static string GetDisplayText(string constName, string qualifier, string fileName)
         {
-            var constsInThisFile =
-                KnownConsts.Where(c => c.source == fileName
-                                    && c.key == constName
-                                    && c.qualification.EndsWith(qualifier)).FirstOrDefault();
+            (string Key, string Qualification, string Value, string Source) constsInThisFile =
+                KnownConsts.Where(c => c.Source == fileName
+                                    && c.Key == constName
+                                    && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
-            if (!string.IsNullOrWhiteSpace(constsInThisFile.value))
+            if (!string.IsNullOrWhiteSpace(constsInThisFile.Value))
             {
-                return constsInThisFile.value;
+                return constsInThisFile.Value;
             }
 
-            var (_, _, value, _) =
-                KnownConsts.Where(c => c.key == constName
-                                    && c.qualification.EndsWith(qualifier)).FirstOrDefault();
+            (string _, string _, string value, string _) =
+                KnownConsts.Where(c => c.Key == constName
+                                    && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
             if (!string.IsNullOrWhiteSpace(value))
             {
