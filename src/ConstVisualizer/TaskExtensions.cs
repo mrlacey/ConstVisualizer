@@ -12,7 +12,7 @@ namespace ConstVisualizer
     internal static class TaskExtensions
     {
         internal static void LogAndForget(this Task task, string source) =>
-            task.ContinueWith(
+            _ = task.ContinueWith(
                 (t, s) => VsShellUtilities.LogError(s as string, t.Exception.ToString()),
                 source,
                 CancellationToken.None,
