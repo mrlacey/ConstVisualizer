@@ -13,9 +13,8 @@ namespace ConstVisualizer
     /// that instantiates the adornment on the event of a <see cref="IWpfTextView"/>'s creation.
     /// </summary>
     [Export(typeof(IWpfTextViewCreationListener))]
-#pragma warning disable SA1133 // Do not combine attributes
     [ContentType("CSharp")]
-#pragma warning restore SA1133 // Do not combine attributes
+    [ContentType("Basic")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class ResourceAdornmentManagerFactory : IWpfTextViewCreationListener
     {
