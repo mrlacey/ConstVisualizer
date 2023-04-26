@@ -160,7 +160,7 @@ namespace ConstVisualizer
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(
                     ex,
-                    "Error in GetAllIndexesCaseInsensitiveAsync",
+                    "Error in IsValidVariableNameAsync",
                     source,
                     charBefore.ToString(),
                     charAfter.ToString());
