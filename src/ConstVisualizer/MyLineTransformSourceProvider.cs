@@ -11,6 +11,7 @@ namespace ConstVisualizer
 {
     [Export(typeof(ILineTransformSourceProvider))]
     [ContentType("CSharp")]
+    [ContentType("Basic")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
     {
