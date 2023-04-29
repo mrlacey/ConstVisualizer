@@ -139,7 +139,7 @@ namespace ConstVisualizer
                 string lineText = line.Extent.GetText();
 
                 // Don't add adornment to the definitions
-                if (lineText.Contains(" const "))
+                if (lineText.Contains(" const ") || lineText.Contains(" Const "))
                 {
                     return;
                 }

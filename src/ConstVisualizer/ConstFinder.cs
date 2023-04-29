@@ -8,8 +8,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
@@ -17,17 +15,17 @@ using Task = System.Threading.Tasks.Task;
 
 namespace ConstVisualizer
 {
-    internal static class ConstFinder
+    internal static partial class ConstFinder
     {
         public static bool HasParsedSolution { get; private set; } = false;
 
-        public static List<(string key, string qualification, string value, string source)> KnownConsts { get; } = new List<(string key, string qualification, string value, string source)>();
+        public static List<(string Key, string Qualification, string Value, string Source)> KnownConsts { get; } = new List<(string Key, string Qualification, string Value, string Source)>();
 
         public static string[] SearchValues
         {
             get
             {
-                return KnownConsts.Select(c => c.key).ToArray();
+                return KnownConsts.Select(c => c.Key).ToArray();
             }
         }
 
@@ -73,7 +71,7 @@ namespace ConstVisualizer
 
                 foreach (ProjectId projectId in projects)
                 {
-                    Compilation projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
+                    var projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
 
                     ////OutputPane.Instance.WriteLine($"Parse loop step duration: {timer.Elapsed} ({projectId})");
 
@@ -112,7 +110,7 @@ namespace ConstVisualizer
 
             try
             {
-                var componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
+                IComponentModel componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
 
                 if (ConstFinder.HasParsedSolution)
                 {
@@ -126,7 +124,7 @@ namespace ConstVisualizer
                         var documentId = workspace.CurrentSolution.GetDocumentIdsWithFilePath(activeDocument.FullName).FirstOrDefault();
                         if (documentId != null)
                         {
-                            var document = workspace.CurrentSolution.GetDocument(documentId);
+                            Document document = workspace.CurrentSolution.GetDocument(documentId);
 
                             await TrackConstsInDocumentAsync(document);
                         }
@@ -190,6 +188,7 @@ namespace ConstVisualizer
                 // Reduces overhead (as there may be lots)
                 // Avoids assets included with Android projects.
                 if (filePath.ToLowerInvariant().EndsWith(".designer.cs")
+                 || filePath.ToLowerInvariant().EndsWith(".designer.vb")
                  || filePath.ToLowerInvariant().EndsWith(".g.cs")
                  || filePath.ToLowerInvariant().EndsWith(".g.i.cs"))
                 {
@@ -200,7 +199,7 @@ namespace ConstVisualizer
 
                 foreach (var item in KnownConsts)
                 {
-                    if (item.source == filePath)
+                    if (item.Source == filePath)
                     {
                         toRemove.Add(item);
                     }
@@ -211,69 +210,9 @@ namespace ConstVisualizer
                     KnownConsts.Remove(item);
                 }
 
-                void AddToKnownConstants(string identifier, string qualifier, string value)
-                {
-                    if (value == null)
-                    {
-                        return;
-                    }
+                ExtractKnownCSharpConstants(root, filePath);
 
-                    var formattedValue = value.Replace("\\\"", "\"");
-
-                    if (formattedValue.StartsWith("nameof(")
-                     && formattedValue.EndsWith(")"))
-                    {
-                        formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
-                    }
-
-                    KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
-                }
-
-                foreach (var vdec in root.DescendantNodes().OfType<VariableDeclarationSyntax>())
-                {
-                    if (vdec != null)
-                    {
-                        if (vdec.Parent != null && vdec.Parent is MemberDeclarationSyntax dec)
-                        {
-                            if (IsConst(dec))
-                            {
-                                if (dec is FieldDeclarationSyntax fds)
-                                {
-                                    var qualification = GetQualification(fds);
-
-                                    foreach (var variable in fds.Declaration?.Variables)
-                                    {
-                                        AddToKnownConstants(
-                                            variable.Identifier.Text,
-                                            qualification,
-                                            variable.Initializer?.Value?.ToString());
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (vdec.Parent != null && vdec.Parent is LocalDeclarationStatementSyntax ldec)
-                            {
-                                if (IsConst(ldec))
-                                {
-                                    if (vdec is VariableDeclarationSyntax vds)
-                                    {
-                                        var qualification = GetQualification(vds);
-
-                                        foreach (var variable in vds.Variables)
-                                        {
-                                            AddToKnownConstants(
-                                                variable.Identifier.Text,
-                                                qualification,
-                                                variable.Initializer?.Value?.ToString());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                ExtractKnownVisualBasicConstants(root, filePath);
             }
             catch (Exception exc)
             {
@@ -282,44 +221,39 @@ namespace ConstVisualizer
             }
         }
 
-        public static string GetQualification(CSharpSyntaxNode dec)
-        {
-            var result = string.Empty;
-            var parent = dec.Parent;
-
-            while (parent != null)
-            {
-                if (parent is ClassDeclarationSyntax cds)
-                {
-                    result = $"{cds.Identifier.ValueText}.{result}";
-                    parent = cds.Parent;
-                }
-                else if (parent is NamespaceDeclarationSyntax nds)
-                {
-                    result = $"{nds.Name}.{result}";
-                    parent = nds.Parent;
-                }
-                else
-                {
-                    parent = parent.Parent;
-                }
-            }
-
-            return result.TrimEnd('.');
-        }
-
         public static bool IsConst(SyntaxNode node)
         {
-            return node.ChildTokens().Any(t => t.IsKind(SyntaxKind.ConstKeyword));
+            return node.ChildTokens().Any(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword) ||
+                                               t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstKeyword));
+        }
+
+        internal static void AddToKnownConstants(string identifier, string qualifier, string value, string filePath)
+        {
+            if (value == null)
+            {
+                return;
+            }
+
+            var formattedValue = value.Replace("\\\"", "\"");
+
+            if (formattedValue.StartsWith("nameof(", StringComparison.OrdinalIgnoreCase)
+            && formattedValue.EndsWith(")"))
+            {
+                formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
+            }
+
+            KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
         }
 
         internal static async Task<EnvDTE.Document> SafeGetActiveDocumentAsync(EnvDTE.DTE dte)
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             try
             {
                 // Some document types (inc. .csproj) throw an error when try and get the ActiveDocument
                 // "The parameter is incorrect. (Exception from HRESULT: 0x80070057 (E_INVALIDARG))"
-                return await Task.FromResult(dte?.ActiveDocument);
+                EnvDTE.Document doc = await Task.FromResult(dte?.ActiveDocument);
+                return doc != null && (doc.Language == "CSharp" || doc.Language == "Basic") ? doc : null;
             }
             catch (Exception exc)
             {
@@ -345,23 +279,23 @@ namespace ConstVisualizer
 
         internal static string GetDisplayText(string constName, string qualifier, string fileName)
         {
-            var constsInThisFile =
-                KnownConsts.Where(c => c.source == fileName
-                                    && c.key == constName
-                                    && c.qualification.EndsWith(qualifier)).FirstOrDefault();
+            (_, _, var valueFromThisFile, _) =
+                KnownConsts.Where(c => c.Source == fileName
+                                    && c.Key == constName
+                                    && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
-            if (!string.IsNullOrWhiteSpace(constsInThisFile.value))
+            if (!string.IsNullOrWhiteSpace(valueFromThisFile))
             {
-                return constsInThisFile.value;
+                return valueFromThisFile;
             }
 
-            var (_, _, value, _) =
-                KnownConsts.Where(c => c.key == constName
-                                    && c.qualification.EndsWith(qualifier)).FirstOrDefault();
+            (_, _, var valueFromOtherFile, _) =
+                KnownConsts.Where(c => c.Key == constName
+                                    && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
-            if (!string.IsNullOrWhiteSpace(value))
+            if (!string.IsNullOrWhiteSpace(valueFromOtherFile))
             {
-                return value;
+                return valueFromOtherFile;
             }
 
             return string.Empty;

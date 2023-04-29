@@ -9,3 +9,6 @@ dotnet_diagnostic.SA1600.severity = silent
 # SA0001: XML comment analysis is disabled due to project configuration
 dotnet_diagnostic.SA0001.severity = silent
 dotnet_diagnostic.SA1000.severity=silent
+
+# SA1601: Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = silent
