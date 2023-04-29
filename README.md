@@ -8,7 +8,7 @@ Download the extension from the [VS Marketplace](https://marketplace.visualstudi
 
 -------------------------------------
 
-A Visual Studio extension to show the values of constants where they are used in C# code.
+A Visual Studio extension to show the values of constants where they are used in C# & VB.Net code.
 
 ![screenshot](./art/screenshot.png)
 
