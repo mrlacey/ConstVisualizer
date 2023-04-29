@@ -43,7 +43,7 @@ namespace ConstVisualizer
             await OutputPane.Instance?.WriteAsync(string.Empty);
             await OutputPane.Instance?.WriteAsync("Show your support by making a one-off or recurring donation at https://github.com/sponsors/mrlacey");
             await OutputPane.Instance?.WriteAsync(string.Empty);
-            await OutputPane.Instance?.WriteAsync("If you become a sponsor, I'll tell you how to hide this message too. ;)");
+            await OutputPane.Instance?.WriteAsync("If you do, I'll tell you how to hide this message too. ;)");
             await OutputPane.Instance?.WriteAsync(string.Empty);
             await OutputPane.Instance?.ActivateAsync();
         }
