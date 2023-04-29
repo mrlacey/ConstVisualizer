@@ -11,15 +11,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Shell;
-using CsharpCodeAnalysis = Microsoft.CodeAnalysis.CSharp;
-using CsharpSyntax = Microsoft.CodeAnalysis.CSharp.Syntax;
 using Task = System.Threading.Tasks.Task;
-using VBasicCodeAnalysis = Microsoft.CodeAnalysis.VisualBasic;
-using VBasicSyntax = Microsoft.CodeAnalysis.VisualBasic.Syntax;
 
 namespace ConstVisualizer
 {
-    internal static class ConstFinder
+    internal static partial class ConstFinder
     {
         public static bool HasParsedSolution { get; private set; } = false;
 
@@ -214,117 +210,9 @@ namespace ConstVisualizer
                     KnownConsts.Remove(item);
                 }
 
-                void AddToKnownConstants(string identifier, string qualifier, string value)
-                {
-                    if (value == null)
-                    {
-                        return;
-                    }
+                ExtractKnownCSharpConstants(root, filePath);
 
-                    var formattedValue = value.Replace("\\\"", "\"");
-
-                    if (formattedValue.StartsWith("nameof(", StringComparison.OrdinalIgnoreCase)
-                    && formattedValue.EndsWith(")"))
-                    {
-                        formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
-                    }
-
-                    KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
-                }
-
-                foreach (CsharpSyntax.VariableDeclarationSyntax vdec in root.DescendantNodes().OfType<CsharpSyntax.VariableDeclarationSyntax>())
-                {
-                    if (vdec != null)
-                    {
-                        if (vdec.Parent != null && vdec.Parent is CsharpSyntax.MemberDeclarationSyntax dec)
-                        {
-                            if (IsConst(dec))
-                            {
-                                if (dec is CsharpSyntax.FieldDeclarationSyntax fds)
-                                {
-                                    var qualification = GetQualificationCSharp(fds);
-
-                                    foreach (CsharpSyntax.VariableDeclaratorSyntax variable in fds.Declaration?.Variables)
-                                    {
-                                        AddToKnownConstants(
-                                            variable.Identifier.Text,
-                                            qualification,
-                                            variable.Initializer?.Value?.ToString());
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (vdec.Parent != null && vdec.Parent is CsharpSyntax.LocalDeclarationStatementSyntax ldec)
-                            {
-                                if (IsConst(ldec))
-                                {
-                                    if (vdec is CsharpSyntax.VariableDeclarationSyntax vds)
-                                    {
-                                        var qualification = GetQualificationCSharp(vds);
-
-                                        foreach (CsharpSyntax.VariableDeclaratorSyntax variable in vds.Variables)
-                                        {
-                                            AddToKnownConstants(
-                                                variable.Identifier.Text,
-                                                qualification,
-                                                variable.Initializer?.Value?.ToString());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                foreach (VBasicSyntax.VariableDeclaratorSyntax vdec in root.DescendantNodes().OfType<VBasicSyntax.VariableDeclaratorSyntax>())
-                {
-                    if (vdec != null)
-                    {
-                        if (vdec.Parent != null && vdec.Parent is VBasicSyntax.DeclarationStatementSyntax dec)
-                        {
-                            if (IsConst(dec))
-                            {
-                                if (dec is VBasicSyntax.FieldDeclarationSyntax fds)
-                                {
-                                    var qualification = GetQualificationVisualBasic(fds);
-
-                                    foreach (VBasicSyntax.VariableDeclaratorSyntax variable in fds.Declarators)
-                                    {
-                                        foreach (VBasicSyntax.ModifiedIdentifierSyntax name in variable.Names)
-                                        {
-                                            AddToKnownConstants(
-                                                name.Identifier.Text,
-                                                qualification,
-                                                variable.Initializer?.Value?.ToString());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (vdec.Parent != null && vdec.Parent is VBasicSyntax.LocalDeclarationStatementSyntax ldec)
-                            {
-                                if (IsConst(ldec))
-                                {
-                                    if (vdec is VBasicSyntax.VariableDeclaratorSyntax vds)
-                                    {
-                                        var qualification = GetQualificationVisualBasic(vds);
-                                        foreach (VBasicSyntax.ModifiedIdentifierSyntax name in vds.Names)
-                                        {
-                                            AddToKnownConstants(
-                                                name.Identifier.Text,
-                                                qualification,
-                                                vds.Initializer?.Value?.ToString());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                ExtractKnownVisualBasicConstants(root, filePath);
             }
             catch (Exception exc)
             {
@@ -333,62 +221,28 @@ namespace ConstVisualizer
             }
         }
 
-        public static string GetQualificationCSharp(CsharpCodeAnalysis.CSharpSyntaxNode dec)
-        {
-            var result = string.Empty;
-            var parent = dec.Parent;
-
-            while (parent != null)
-            {
-                if (parent is CsharpSyntax.TypeDeclarationSyntax tds)
-                {
-                    result = $"{tds.Identifier.ValueText}.{result}";
-                    parent = tds.Parent;
-                }
-                else if (parent is CsharpSyntax.NamespaceDeclarationSyntax nds)
-                {
-                    result = $"{nds.Name}.{result}";
-                    parent = nds.Parent;
-                }
-                else
-                {
-                    parent = parent.Parent;
-                }
-            }
-
-            return result.TrimEnd('.');
-        }
-
-        public static string GetQualificationVisualBasic(VBasicCodeAnalysis.VisualBasicSyntaxNode dec)
-        {
-            var result = string.Empty;
-            SyntaxNode parent = dec.Parent;
-
-            while (parent != null)
-            {
-                if (parent is VBasicSyntax.TypeBlockSyntax tbs)
-                {
-                    result = $"{tbs.BlockStatement.Identifier.ValueText}.{result}";
-                    parent = tbs.Parent;
-                }
-                else if (parent is VBasicSyntax.NamespaceBlockSyntax nbs)
-                {
-                    result = $"{nbs.NamespaceStatement.Name}.{result}";
-                    parent = nbs.Parent;
-                }
-                else
-                {
-                    parent = parent.Parent;
-                }
-            }
-
-            return result.TrimEnd('.');
-        }
-
         public static bool IsConst(SyntaxNode node)
         {
-            return node.ChildTokens().Any(t => t.IsKind(CsharpCodeAnalysis.SyntaxKind.ConstKeyword) ||
-                                               t.IsKind(VBasicCodeAnalysis.SyntaxKind.ConstKeyword));
+            return node.ChildTokens().Any(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword) ||
+                                               t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstKeyword));
+        }
+
+        internal static void AddToKnownConstants(string identifier, string qualifier, string value, string filePath)
+        {
+            if (value == null)
+            {
+                return;
+            }
+
+            var formattedValue = value.Replace("\\\"", "\"");
+
+            if (formattedValue.StartsWith("nameof(", StringComparison.OrdinalIgnoreCase)
+            && formattedValue.EndsWith(")"))
+            {
+                formattedValue = formattedValue.Substring(7, formattedValue.Length - 8);
+            }
+
+            KnownConsts.Add((identifier, qualifier, formattedValue, filePath));
         }
 
         internal static async Task<EnvDTE.Document> SafeGetActiveDocumentAsync(EnvDTE.DTE dte)
@@ -425,23 +279,23 @@ namespace ConstVisualizer
 
         internal static string GetDisplayText(string constName, string qualifier, string fileName)
         {
-            var constsInThisFile =
+            (_, _, var valueFromThisFile, _) =
                 KnownConsts.Where(c => c.Source == fileName
                                     && c.Key == constName
                                     && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
-            if (!string.IsNullOrWhiteSpace(constsInThisFile.Value))
+            if (!string.IsNullOrWhiteSpace(valueFromThisFile))
             {
-                return constsInThisFile.Value;
+                return valueFromThisFile;
             }
 
-            (_, _, var value, _) =
+            (_, _, var valueFromOtherFile, _) =
                 KnownConsts.Where(c => c.Key == constName
                                     && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
-            if (!string.IsNullOrWhiteSpace(value))
+            if (!string.IsNullOrWhiteSpace(valueFromOtherFile))
             {
-                return value;
+                return valueFromOtherFile;
             }
 
             return string.Empty;

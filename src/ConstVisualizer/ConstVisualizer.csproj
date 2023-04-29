@@ -49,6 +49,8 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="ConstFinder.cs" />
+    <Compile Include="ConstFinder.VisualBasic.cs" />
+    <Compile Include="ConstFinder.CSharp.cs" />
     <Compile Include="ExceptionHelper.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MyLineTransformSource.cs" />
