@@ -39,6 +39,8 @@ namespace ConstVisualizer
         {
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
+            Instance = this;
+
             await this.LoadSystemTextSettingsAsync(cancellationToken);
 
             Microsoft.VisualStudio.Shell.Events.SolutionEvents.OnAfterOpenSolution += this.HandleOpenSolution;
@@ -53,8 +55,6 @@ namespace ConstVisualizer
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(ConstVisualizerPackage));
 
             await SponsorRequestHelper.CheckIfNeedToShowAsync();
-
-            Instance = this;
         }
 
         private void HandleOpenSolution(object sender, EventArgs e)
