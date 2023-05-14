@@ -225,6 +225,11 @@ namespace ConstVisualizer
         {
             return node.ChildTokens().Any(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.ConstKeyword) ||
                                                t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.ConstKeyword));
+
+            // The following will exclude all consts explicitly defined as private - May be better to track these so they can be lodaded within the same class
+            ////&&
+            ////!node.ChildTokens().Any(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PrivateKeyword) ||
+            ////                             t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.PrivateKeyword));
         }
 
         internal static void AddToKnownConstants(string identifier, string qualifier, string value, string filePath)
@@ -291,6 +296,7 @@ namespace ConstVisualizer
 
             (_, _, var valueFromOtherFile, _) =
                 KnownConsts.Where(c => c.Key == constName
+                                    && !string.IsNullOrEmpty(qualifier)
                                     && c.Qualification.EndsWith(qualifier)).FirstOrDefault();
 
             if (!string.IsNullOrWhiteSpace(valueFromOtherFile))
