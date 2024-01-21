@@ -32,7 +32,6 @@ namespace ConstVisualizer
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
             var timer = new Stopwatch();
             timer.Start();
 
@@ -43,7 +42,10 @@ namespace ConstVisualizer
                     componentModel = (IComponentModel)Package.GetGlobalService(typeof(SComponentModel));
                 }
 
-                ////OutputPane.Instance.WriteLine($"Parse step 1 duration: {timer.Elapsed}");
+                if (ConstVisualizerPackage.Instance.Options.AdvancedLogging)
+                {
+                    OutputPane.Instance.WriteLine($"Parse step 1 duration: {timer.Elapsed}");
+                }
 
                 var workspace = (Workspace)componentModel.GetService<VisualStudioWorkspace>();
 
@@ -52,7 +54,10 @@ namespace ConstVisualizer
                     return;
                 }
 
-                ////OutputPane.Instance.WriteLine($"Parse step 2 duration: {timer.Elapsed}");
+                if (ConstVisualizerPackage.Instance.Options.AdvancedLogging)
+                {
+                    OutputPane.Instance.WriteLine($"Parse step 2 duration: {timer.Elapsed}");
+                }
 
                 var projectGraph = workspace.CurrentSolution?.GetProjectDependencyGraph();
 
@@ -61,19 +66,28 @@ namespace ConstVisualizer
                     return;
                 }
 
-                ////OutputPane.Instance.WriteLine($"Parse step 3 duration: {timer.Elapsed}");
+                if (ConstVisualizerPackage.Instance.Options.AdvancedLogging)
+                {
+                    OutputPane.Instance.WriteLine($"Parse step 3 duration: {timer.Elapsed}");
+                }
 
                 await Task.Yield();
 
                 var projects = projectGraph.GetTopologicallySortedProjects();
 
-                ////OutputPane.Instance.WriteLine($"Parse step 4 duration: {timer.Elapsed}");
+                if (ConstVisualizerPackage.Instance.Options.AdvancedLogging)
+                {
+                    OutputPane.Instance.WriteLine($"Parse step 4 duration: {timer.Elapsed}");
+                }
 
                 foreach (ProjectId projectId in projects)
                 {
                     var projectCompilation = await workspace.CurrentSolution?.GetProject(projectId).GetCompilationAsync();
 
-                    ////OutputPane.Instance.WriteLine($"Parse loop step duration: {timer.Elapsed} ({projectId})");
+                    if (ConstVisualizerPackage.Instance.Options.AdvancedLogging)
+                    {
+                        OutputPane.Instance.WriteLine($"Parse loop step duration: {timer.Elapsed} ({projectId})");
+                    }
 
                     if (projectCompilation != null)
                     {
@@ -91,6 +105,7 @@ namespace ConstVisualizer
             catch (Exception exc)
             {
                 // Exceptions can happen in the above when a solution is modified before the package has finished loading :(
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 ExceptionHelper.Log(exc);
 
                 // Recovery from the above would be very difficult so easiest to prompt to trigger for reparsing later.
@@ -210,9 +225,15 @@ namespace ConstVisualizer
                     KnownConsts.Remove(item);
                 }
 
-                ExtractKnownCSharpConstants(root, filePath);
+                if (ConstVisualizerPackage.Instance.Options.ProcessCSharpFiles)
+                {
+                    ExtractKnownCSharpConstants(root, filePath);
+                }
 
-                ExtractKnownVisualBasicConstants(root, filePath);
+                if (ConstVisualizerPackage.Instance.Options.ProcessVbFiles)
+                {
+                    ExtractKnownVisualBasicConstants(root, filePath);
+                }
             }
             catch (Exception exc)
             {

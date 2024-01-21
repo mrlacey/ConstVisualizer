@@ -50,7 +50,10 @@ namespace ConstVisualizer
 
             var componentModel = GetGlobalService(typeof(SComponentModel)) as IComponentModel;
 
-            await ConstFinder.TryParseSolutionAsync(componentModel);
+            if (this.Options.ProcessCSharpFiles || this.Options.ProcessVbFiles)
+            {
+                await ConstFinder.TryParseSolutionAsync(componentModel);
+            }
 
             VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(ConstVisualizerPackage));
 
