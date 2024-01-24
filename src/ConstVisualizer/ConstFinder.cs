@@ -29,8 +29,17 @@ namespace ConstVisualizer
             }
         }
 
+        private static bool _parsingInProgress = false;
+
         public static async Task TryParseSolutionAsync(IComponentModel componentModel = null)
         {
+            if (_parsingInProgress)
+            {
+                return;
+            }
+
+            _parsingInProgress = true;
+
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var timer = new Stopwatch();
             timer.Start();
@@ -116,6 +125,8 @@ namespace ConstVisualizer
                 timer.Stop();
 
                 await OutputPane.Instance.WriteAsync($"Parse total duration: {timer.Elapsed}");
+
+                _parsingInProgress = false;
             }
         }
 
