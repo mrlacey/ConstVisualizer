@@ -8,62 +8,62 @@ using Microsoft.VisualStudio.Shell.Interop;
 
 namespace ConstVisualizer
 {
-    internal class MyRunningDocTableEvents : IVsRunningDocTableEvents
-    {
-        private static MyRunningDocTableEvents instance;
+	internal class MyRunningDocTableEvents : IVsRunningDocTableEvents
+	{
+		private static MyRunningDocTableEvents instance;
 
-        private MyRunningDocTableEvents()
-        {
-        }
+		private MyRunningDocTableEvents()
+		{
+		}
 
-        public static MyRunningDocTableEvents Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new MyRunningDocTableEvents();
-                }
+		public static MyRunningDocTableEvents Instance
+		{
+			get
+			{
+				if (instance == null)
+				{
+					instance = new MyRunningDocTableEvents();
+				}
 
-                return instance;
-            }
-        }
+				return instance;
+			}
+		}
 
-        public int OnAfterFirstDocumentLock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
-        {
-            return VSConstants.S_OK;
-        }
+		public int OnAfterFirstDocumentLock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
+		{
+			return VSConstants.S_OK;
+		}
 
-        public int OnBeforeLastDocumentUnlock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
-        {
-            return VSConstants.S_OK;
-        }
+		public int OnBeforeLastDocumentUnlock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
+		{
+			return VSConstants.S_OK;
+		}
 
-        public int OnAfterSave(uint docCookie)
-        {
-            ThreadHelper.JoinableTaskFactory.Run(async () => await ConstFinder.ReloadConstsAsync());
+		public int OnAfterSave(uint docCookie)
+		{
+			ThreadHelper.JoinableTaskFactory.Run(async () => await ConstFinder.ReloadConstsAsync());
 
-            return VSConstants.S_OK;
-        }
+			return VSConstants.S_OK;
+		}
 
-        public int OnAfterAttributeChange(uint docCookie, uint grfAttribs)
-        {
-            return VSConstants.S_OK;
-        }
+		public int OnAfterAttributeChange(uint docCookie, uint grfAttribs)
+		{
+			return VSConstants.S_OK;
+		}
 
-        public int OnBeforeDocumentWindowShow(uint docCookie, int fFirstShow, IVsWindowFrame pFrame)
-        {
-           // if (fFirstShow == 1)
-            {
-                ThreadHelper.JoinableTaskFactory.Run(async () => await ConstFinder.ReloadConstsAsync());
-            }
+		public int OnBeforeDocumentWindowShow(uint docCookie, int fFirstShow, IVsWindowFrame pFrame)
+		{
+			// if (fFirstShow == 1)
+			{
+				ThreadHelper.JoinableTaskFactory.Run(async () => await ConstFinder.ReloadConstsAsync());
+			}
 
-            return VSConstants.S_OK;
-        }
+			return VSConstants.S_OK;
+		}
 
-        public int OnAfterDocumentWindowHide(uint docCookie, IVsWindowFrame pFrame)
-        {
-            return VSConstants.S_OK;
-        }
-    }
+		public int OnAfterDocumentWindowHide(uint docCookie, IVsWindowFrame pFrame)
+		{
+			return VSConstants.S_OK;
+		}
+	}
 }

@@ -9,18 +9,18 @@ using Microsoft.VisualStudio.Utilities;
 
 namespace ConstVisualizer
 {
-    [Export(typeof(ILineTransformSourceProvider))]
-    [ContentType("CSharp")]
-    [ContentType("Basic")]
-    [TextViewRole(PredefinedTextViewRoles.Document)]
-    internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
-    {
-        ILineTransformSource ILineTransformSourceProvider.Create(IWpfTextView view)
-        {
-            ResourceAdornmentManager manager =
-                view.Properties.GetOrCreateSingletonProperty(
-                    () => new ResourceAdornmentManager(view));
-            return new MyLineTransformSource(manager);
-        }
-    }
+	[Export(typeof(ILineTransformSourceProvider))]
+	[ContentType("CSharp")]
+	[ContentType("Basic")]
+	[TextViewRole(PredefinedTextViewRoles.Document)]
+	internal class MyLineTransformSourceProvider : ILineTransformSourceProvider
+	{
+		ILineTransformSource ILineTransformSourceProvider.Create(IWpfTextView view)
+		{
+			ResourceAdornmentManager manager =
+				view.Properties.GetOrCreateSingletonProperty(
+					() => new ResourceAdornmentManager(view));
+			return new MyLineTransformSource(manager);
+		}
+	}
 }

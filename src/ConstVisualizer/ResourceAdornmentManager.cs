@@ -19,279 +19,279 @@ using Task = System.Threading.Tasks.Task;
 
 namespace ConstVisualizer
 {
-    /// <summary>
-    /// Important class. Handles creation of adornments on appropriate lines.
-    /// </summary>
-    internal class ResourceAdornmentManager : IDisposable
-    {
-        private readonly IAdornmentLayer layer;
-        private readonly IWpfTextView view;
-        private readonly string fileName;
-        private bool hasDoneInitialCreateVisualsPass = false;
+	/// <summary>
+	/// Important class. Handles creation of adornments on appropriate lines.
+	/// </summary>
+	internal class ResourceAdornmentManager : IDisposable
+	{
+		private readonly IAdornmentLayer layer;
+		private readonly IWpfTextView view;
+		private readonly string fileName;
+		private bool hasDoneInitialCreateVisualsPass = false;
 
-        public ResourceAdornmentManager(IWpfTextView view)
-        {
-            this.view = view;
-            this.layer = view.GetAdornmentLayer("ConstCommentLayer");
+		public ResourceAdornmentManager(IWpfTextView view)
+		{
+			this.view = view;
+			this.layer = view.GetAdornmentLayer("ConstCommentLayer");
 
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.fileName = this.GetFileName(view.TextBuffer);
+			this.fileName = this.GetFileName(view.TextBuffer);
 
-            this.view.LayoutChanged += this.LayoutChangedHandler;
-        }
+			this.view.LayoutChanged += this.LayoutChangedHandler;
+		}
 
-        public static List<string> SearchValues { get; set; } = new List<string>();
+		public static List<string> SearchValues { get; set; } = new List<string>();
 
-        // Initialize to the same default as VS
-        public static uint TextSize { get; set; } = 10;
+		// Initialize to the same default as VS
+		public static uint TextSize { get; set; } = 10;
 
-        // Initialize to a reasonable value for display on light or dark themes/background.
-        public static Color TextForegroundColor { get; set; } = Colors.Gray;
+		// Initialize to a reasonable value for display on light or dark themes/background.
+		public static Color TextForegroundColor { get; set; } = Colors.Gray;
 
-        public static string PreferredCulture { get; private set; }
+		public static string PreferredCulture { get; private set; }
 
-        public static bool SupportAspNetLocalizer { get; private set; }
+		public static bool SupportAspNetLocalizer { get; private set; }
 
-        public static bool SupportNamespaceAliases { get; private set; }
+		public static bool SupportNamespaceAliases { get; private set; }
 
-        // Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
-        // Also use this to identify lines to pad so the textblocks can be seen
-        public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
+		// Keep a record of displayed text blocks so we can remove them as soon as changed or no longer appropriate
+		// Also use this to identify lines to pad so the textblocks can be seen
+		public Dictionary<int, List<(TextBlock textBlock, string resName)>> DisplayedTextBlocks { get; set; } = new Dictionary<int, List<(TextBlock textBlock, string resName)>>();
 
-        public string GetFileName(ITextBuffer textBuffer)
-        {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+		public string GetFileName(ITextBuffer textBuffer)
+		{
+			Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            var rc = textBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
+			var rc = textBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
 
-            if (rc == true)
-            {
-                return textDoc.FilePath;
-            }
-            else
-            {
-                rc = textBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out IVsTextBuffer vsTextBuffer);
+			if (rc == true)
+			{
+				return textDoc.FilePath;
+			}
+			else
+			{
+				rc = textBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out IVsTextBuffer vsTextBuffer);
 
-                if (rc)
-                {
-                    if (vsTextBuffer is IPersistFileFormat persistFileFormat)
-                    {
-                        persistFileFormat.GetCurFile(out string filePath, out _);
-                        return filePath;
-                    }
-                }
+				if (rc)
+				{
+					if (vsTextBuffer is IPersistFileFormat persistFileFormat)
+					{
+						persistFileFormat.GetCurFile(out string filePath, out _);
+						return filePath;
+					}
+				}
 
-                return null;
-            }
-        }
+				return null;
+			}
+		}
 
-        /// <summary>
-        /// This is called by the TextView when closing. Events are unsubscribed here.
-        /// </summary>
-        /// <remarks>
-        /// It's actually called twice - once by the IPropertyOwner instance, and again by the ITagger instance.
-        /// </remarks>
-        public void Dispose() => this.UnsubscribeFromViewerEvents();
+		/// <summary>
+		/// This is called by the TextView when closing. Events are unsubscribed here.
+		/// </summary>
+		/// <remarks>
+		/// It's actually called twice - once by the IPropertyOwner instance, and again by the ITagger instance.
+		/// </remarks>
+		public void Dispose() => this.UnsubscribeFromViewerEvents();
 
-        /// <summary>
-        /// On layout change add the adornment to any reformatted lines.
-        /// </summary>
+		/// <summary>
+		/// On layout change add the adornment to any reformatted lines.
+		/// </summary>
 #pragma warning disable VSTHRD100 // Avoid async void methods
-        private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
+		private async void LayoutChangedHandler(object sender, TextViewLayoutChangedEventArgs e)
 #pragma warning restore VSTHRD100 // Avoid async void methods
-        {
-            var collection = this.hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
+		{
+			var collection = this.hasDoneInitialCreateVisualsPass ? (IEnumerable<ITextViewLine>)e.NewOrReformattedLines : this.view.TextViewLines;
 
-            foreach (ITextViewLine line in collection)
-            {
-                int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
+			foreach (ITextViewLine line in collection)
+			{
+				int lineNumber = line.Snapshot.GetLineFromPosition(line.Start.Position).LineNumber;
 
-                try
-                {
-                    await this.CreateVisualsAsync(line, lineNumber);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    await OutputPane.Instance?.WriteAsync("Error handling layout changed");
-                    await OutputPane.Instance?.WriteAsync(ex.Message);
-                    await OutputPane.Instance?.WriteAsync(ex.Source);
-                    await OutputPane.Instance?.WriteAsync(ex.StackTrace);
-                }
+				try
+				{
+					await this.CreateVisualsAsync(line, lineNumber);
+				}
+				catch (InvalidOperationException ex)
+				{
+					await OutputPane.Instance?.WriteAsync("Error handling layout changed");
+					await OutputPane.Instance?.WriteAsync(ex.Message);
+					await OutputPane.Instance?.WriteAsync(ex.Source);
+					await OutputPane.Instance?.WriteAsync(ex.StackTrace);
+				}
 
-                this.hasDoneInitialCreateVisualsPass = true;
-            }
-        }
+				this.hasDoneInitialCreateVisualsPass = true;
+			}
+		}
 
-        /// <summary>
-        /// Scans text line for use of resource class, then adds new adornment.
-        /// </summary>
-        private async Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
-        {
-            try
-            {
-                if (!ConstFinder.KnownConsts.Any())
-                {
-                    // If there are no known constants then there's no point doing anything that follows.
-                    return;
-                }
+		/// <summary>
+		/// Scans text line for use of resource class, then adds new adornment.
+		/// </summary>
+		private async Task CreateVisualsAsync(ITextViewLine line, int lineNumber)
+		{
+			try
+			{
+				if (!ConstFinder.KnownConsts.Any())
+				{
+					// If there are no known constants then there's no point doing anything that follows.
+					return;
+				}
 
-                string lineText = line.Extent.GetText();
+				string lineText = line.Extent.GetText();
 
-                // Don't add adornment to the definitions
-                if (lineText.Contains(" const ") || lineText.Contains(" Const "))
-                {
-                    return;
-                }
+				// Don't add adornment to the definitions
+				if (lineText.Contains(" const ") || lineText.Contains(" Const "))
+				{
+					return;
+				}
 
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                // The extent will include all of a collapsed section
-                if (lineText.Contains(Environment.NewLine))
-                {
-                    // We only want the first "line" here as that's all that can be seen on screen
-                    lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase));
-                }
+				// The extent will include all of a collapsed section
+				if (lineText.Contains(Environment.NewLine))
+				{
+					// We only want the first "line" here as that's all that can be seen on screen
+					lineText = lineText.Substring(0, lineText.IndexOf(Environment.NewLine, StringComparison.InvariantCultureIgnoreCase));
+				}
 
-                string[] searchArray = ConstFinder.SearchValues;
+				string[] searchArray = ConstFinder.SearchValues;
 
-                // Remove any textblocks displayed on this line so it won't conflict with anything we add below.
-                // Handles no textblocks to show or the text to display having changed.
-                if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
-                {
-                    foreach (var (textBlock, _) in this.DisplayedTextBlocks[lineNumber])
-                    {
-                        this.layer.RemoveAdornment(textBlock);
-                    }
+				// Remove any textblocks displayed on this line so it won't conflict with anything we add below.
+				// Handles no textblocks to show or the text to display having changed.
+				if (this.DisplayedTextBlocks.ContainsKey(lineNumber))
+				{
+					foreach (var (textBlock, _) in this.DisplayedTextBlocks[lineNumber])
+					{
+						this.layer.RemoveAdornment(textBlock);
+					}
 
-                    this.DisplayedTextBlocks.Remove(lineNumber);
-                }
+					this.DisplayedTextBlocks.Remove(lineNumber);
+				}
 
-                var matches = await lineText.GetAllWholeWordIndexesAsync(searchArray);
+				var matches = await lineText.GetAllWholeWordIndexesAsync(searchArray);
 
-                if (matches.Any())
-                {
-                    var lastLeft = double.NaN;
+				if (matches.Any())
+				{
+					var lastLeft = double.NaN;
 
-                    // Reverse the list to can go through them right-to-left so know if there's anything that might overlap
-                    matches.Reverse();
+					// Reverse the list to can go through them right-to-left so know if there's anything that might overlap
+					matches.Reverse();
 
-                    foreach (var (index, value) in matches)
-                    {
-                        var qualNameStart = lineText.Substring(0, index).LastIndexOfAny(new[] { ' ', ':', ',', '"', '(', ')', '{', '}', '[', ']' });
+					foreach (var (index, value) in matches)
+					{
+						var qualNameStart = lineText.Substring(0, index).LastIndexOfAny(new[] { ' ', ':', ',', '"', '(', ')', '{', '}', '[', ']' });
 
-                        var qualifier = lineText.Substring(qualNameStart + 1, index - qualNameStart - 1);
+						var qualifier = lineText.Substring(qualNameStart + 1, index - qualNameStart - 1);
 
-                        var displayText = ConstFinder.GetDisplayText(value, qualifier.TrimEnd('.'), this.fileName);
+						var displayText = ConstFinder.GetDisplayText(value, qualifier.TrimEnd('.'), this.fileName);
 
-                        if (string.IsNullOrWhiteSpace(displayText))
-                        {
-                            break;
-                        }
+						if (string.IsNullOrWhiteSpace(displayText))
+						{
+							break;
+						}
 
-                        // Don't adorn assigment of constant (or other variable with matching name)
-                        if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == " =")
-                        {
-                            break;
-                        }
+						// Don't adorn assigment of constant (or other variable with matching name)
+						if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == " =")
+						{
+							break;
+						}
 
-                        // Don't adorn a method that has the same name as a const
-                        if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == "()")
-                        {
-                            break;
-                        }
+						// Don't adorn a method that has the same name as a const
+						if (lineText.Length >= index + value.Length + 2 && lineText.Substring(index + value.Length, 2) == "()")
+						{
+							break;
+						}
 
-                        // Don't adorn a part of a literal string that matches a const
-                        if (lineText[index - 1] == '"' || (lineText.Length >= index + value.Length + 1 && lineText[index + value.Length] == '"'))
-                        {
-                            break;
-                        }
+						// Don't adorn a part of a literal string that matches a const
+						if (lineText[index - 1] == '"' || (lineText.Length >= index + value.Length + 1 && lineText[index + value.Length] == '"'))
+						{
+							break;
+						}
 
-                        // Don't adorn something after an indexer
-                        if (index > 2 && lineText.Substring(index - 2, 2) == "].")
-                        {
-                            break;
-                        }
+						// Don't adorn something after an indexer
+						if (index > 2 && lineText.Substring(index - 2, 2) == "].")
+						{
+							break;
+						}
 
-                        // Basic detection for comments (which shouldn't be adorned)
-                        if (lineText.TrimStart().StartsWith("//"))
-                        {
-                            break;
-                        }
+						// Basic detection for comments (which shouldn't be adorned)
+						if (lineText.TrimStart().StartsWith("//"))
+						{
+							break;
+						}
 
-                        // Don't adorn something followed by an opening brace (can happen when a type has the same name as a known const)
-                        if (index > 2 && lineText.Substring(index - 2, 2) == " {")
-                        {
-                            break;
-                        }
+						// Don't adorn something followed by an opening brace (can happen when a type has the same name as a known const)
+						if (index > 2 && lineText.Substring(index - 2, 2) == " {")
+						{
+							break;
+						}
 
-                        //// Don't adorn anything with a space or dot before and a dot after. These are coincidental matches
-                        //// check for `lineText.Length > ...` is to handle full line completion scenarios
-                        if (index > 1
-                            && char.IsWhiteSpace(lineText[index - 1])
-                            && lineText.Length > (index + value.Length)
-                            && lineText[index + value.Length] == '.')
-                        {
-                            break;
-                        }
+						//// Don't adorn anything with a space or dot before and a dot after. These are coincidental matches
+						//// check for `lineText.Length > ...` is to handle full line completion scenarios
+						if (index > 1
+							&& char.IsWhiteSpace(lineText[index - 1])
+							&& lineText.Length > (index + value.Length)
+							&& lineText[index + value.Length] == '.')
+						{
+							break;
+						}
 
-                        if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
-                        {
-                            this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
-                        }
+						if (!this.DisplayedTextBlocks.ContainsKey(lineNumber))
+						{
+							this.DisplayedTextBlocks.Add(lineNumber, new List<(TextBlock textBlock, string resName)>());
+						}
 
-                        if (!string.IsNullOrWhiteSpace(displayText) && TextSize > 0)
-                        {
-                            var brush = new SolidColorBrush(TextForegroundColor);
-                            brush.Freeze();
+						if (!string.IsNullOrWhiteSpace(displayText) && TextSize > 0)
+						{
+							var brush = new SolidColorBrush(TextForegroundColor);
+							brush.Freeze();
 
-                            var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + ConstVisualizerPackage.Instance.Options.TopPadding + ConstVisualizerPackage.Instance.Options.BottomPadding;
-                            var tb = new TextBlock
-                            {
-                                Foreground = brush,
-                                Text = displayText,
-                                FontSize = TextSize,
-                                Height = height,
-                                VerticalAlignment = VerticalAlignment.Top,
-                                Padding = new Thickness(0, ConstVisualizerPackage.Instance.Options.TopPadding, 0, 0),
-                            };
+							var height = (TextSize * Constants.TextBlockSizeToFontScaleFactor) + ConstVisualizerPackage.Instance.Options.TopPadding + ConstVisualizerPackage.Instance.Options.BottomPadding;
+							var tb = new TextBlock
+							{
+								Foreground = brush,
+								Text = displayText,
+								FontSize = TextSize,
+								Height = height,
+								VerticalAlignment = VerticalAlignment.Top,
+								Padding = new Thickness(0, ConstVisualizerPackage.Instance.Options.TopPadding, 0, 0),
+							};
 
-                            this.DisplayedTextBlocks[lineNumber].Add((tb, value));
+							this.DisplayedTextBlocks[lineNumber].Add((tb, value));
 
-                            // Get coordinates of text
-                            int start = line.Extent.Start.Position + index;
-                            int end = line.Start + (line.Extent.Length - 1);
-                            var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
-                            var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
+							// Get coordinates of text
+							int start = line.Extent.Start.Position + index;
+							int end = line.Start + (line.Extent.Length - 1);
+							var span = new SnapshotSpan(this.view.TextSnapshot, Span.FromBounds(start, end));
+							var lineGeometry = this.view.TextViewLines.GetMarkerGeometry(span);
 
-                            if (!double.IsNaN(lastLeft))
-                            {
-                                tb.MaxWidth = lastLeft - lineGeometry.Bounds.Left - 5; // Minus 5 for padding
-                                tb.TextTrimming = TextTrimming.CharacterEllipsis;
-                            }
+							if (!double.IsNaN(lastLeft))
+							{
+								tb.MaxWidth = lastLeft - lineGeometry.Bounds.Left - 5; // Minus 5 for padding
+								tb.TextTrimming = TextTrimming.CharacterEllipsis;
+							}
 
-                            Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
-                            Canvas.SetTop(tb, line.TextTop - tb.Height);
+							Canvas.SetLeft(tb, lineGeometry.Bounds.Left);
+							Canvas.SetTop(tb, line.TextTop - tb.Height);
 
-                            lastLeft = lineGeometry.Bounds.Left;
+							lastLeft = lineGeometry.Bounds.Left;
 
-                            this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+							this.layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, line.Extent, tag: null, adornment: tb, removedCallback: null);
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                await OutputPane.Instance?.WriteAsync("Error creating visuals");
-                ExceptionHelper.Log(ex);
-            }
-        }
+				await OutputPane.Instance?.WriteAsync("Error creating visuals");
+				ExceptionHelper.Log(ex);
+			}
+		}
 
-        private void UnsubscribeFromViewerEvents()
-        {
-            this.view.LayoutChanged -= this.LayoutChangedHandler;
-        }
-    }
+		private void UnsubscribeFromViewerEvents()
+		{
+			this.view.LayoutChanged -= this.LayoutChangedHandler;
+		}
+	}
 }
