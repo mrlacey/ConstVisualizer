@@ -7,6 +7,7 @@
         <MoreInfo>https://github.com/mrlacey/ConstVisualizer</MoreInfo>
         <License>Resources\LICENSE.txt</License>
         <Icon>Resources\Icon.png</Icon>
+        <Tags>c#, csharp</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.5, 18.0)">

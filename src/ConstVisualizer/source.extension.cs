@@ -13,6 +13,6 @@ namespace ConstVisualizer
         public const string Language = "en-US";
         public const string Version = "2.3";
         public const string Author = "Matt Lacey";
-        public const string Tags = "";
+        public const string Tags = "c#, csharp";
     }
 }
