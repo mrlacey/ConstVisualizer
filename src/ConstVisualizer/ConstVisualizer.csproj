@@ -126,6 +126,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="filestosign.txt" />
     <Content Include="Resources\LICENSE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
