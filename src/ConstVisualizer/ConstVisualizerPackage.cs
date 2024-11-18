@@ -3,9 +3,12 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Media;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
@@ -58,6 +61,41 @@ namespace ConstVisualizer
 			VSColorTheme.ThemeChanged += (e) => this.LoadSystemTextSettingsAsync(CancellationToken.None).LogAndForget(nameof(ConstVisualizerPackage));
 
 			await SponsorRequestHelper.CheckIfNeedToShowAsync();
+
+			TrackBasicUsageAnalytics();
+		}
+
+		private static void TrackBasicUsageAnalytics()
+		{
+#if !DEBUG
+			try
+			{
+				if (string.IsNullOrWhiteSpace(AnalyticsConfig.TelemetryConnectionString))
+				{
+					return;
+				}
+
+				var config = new TelemetryConfiguration
+				{
+					ConnectionString = AnalyticsConfig.TelemetryConnectionString,
+				};
+
+				var client = new TelemetryClient(config);
+
+				var properties = new Dictionary<string, string>
+				{
+					{ "VsixVersion", Vsix.Version },
+					{ "VsVersion", Microsoft.VisualStudio.Telemetry.TelemetryService.DefaultSession?.GetSharedProperty("VS.Core.ExeVersion") },
+				};
+
+				client.TrackEvent(Vsix.Name, properties);
+			}
+			catch (Exception exc)
+			{
+				System.Diagnostics.Debug.WriteLine(exc);
+				OutputPane.Instance.WriteLine("Error tracking usage analytics: " + exc.Message);
+			}
+#endif
 		}
 
 		private void HandleOpenSolution(object sender, EventArgs e)
