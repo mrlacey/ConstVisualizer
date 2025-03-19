@@ -56,7 +56,7 @@ namespace ConstVisualizer
 			await OutputPane.Instance.WriteAsync("");
 			await OutputPane.Instance.WriteAsync("");
 			await OutputPane.Instance.WriteAsync("If you can't afford to support financially, you can always");
-			await OutputPane.Instance.WriteAsync("leave a positive review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.BuildTimerHistory&ssr=false#review-details");
+			await OutputPane.Instance.WriteAsync("leave a positive review at https://marketplace.visualstudio.com/items?itemName=MattLaceyLtd.ConstVisualizer&ssr=false#review-details");
 			await OutputPane.Instance.WriteAsync("");
 			await OutputPane.Instance.WriteAsync("********************************************************************************************************");
 		}
