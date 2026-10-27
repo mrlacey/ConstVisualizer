@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".mcp.json" />
+    <File Path="Directory.Build.targets" />
+    <File Path="README.md" />
+    <File Path="src/.editorconfig" />
+  </Folder>
+  <Project Path="src/ConstVisualizer.Tests/ConstVisualizer.Tests.csproj" Id="1ebe2729-96ac-4407-88b7-5864baa0f28f" />
+  <Project Path="src/ConstVisualizer/ConstVisualizer.csproj" Id="6ea03343-ff20-43bc-8fbe-9233cf1e4c4a" />
+</Solution>
