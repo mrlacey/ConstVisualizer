@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" ?>
+<!--
+Central package management: the versions of all packages are set here, the project files name the packages only.
+See https://learn.microsoft.com/nuget/consume-packages/central-package-management
+-->
+<Project>
+
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+
+	<ItemGroup Label="Visual Studio extension">
+		<PackageVersion Include="Microsoft.ApplicationInsights" Version="2.23.0" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+		<PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.14.0" />
+		<PackageVersion Include="Microsoft.VisualStudio.LanguageServices" Version="4.14.0" />
+		<PackageVersion Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" />
+		<PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" />
+		<PackageVersion Include="WarnAboutTODOs" Version="1.7.1" />
+	</ItemGroup>
+
+	<!-- Pinned explicitly, so that the dependencies of the Visual Studio packages do not bring in other versions. -->
+	<ItemGroup Label="Pinned dependencies">
+		<PackageVersion Include="MessagePack" Version="3.1.4" />
+		<PackageVersion Include="Microsoft.IO.Redist" Version="6.1.3" />
+		<PackageVersion Include="Nerdbank.Streams" Version="2.13.16" />
+		<PackageVersion Include="System.Collections.Immutable" Version="9.0.10" />
+		<PackageVersion Include="System.Text.Json" Version="9.0.10" />
+	</ItemGroup>
+
+	<ItemGroup Label="Tests">
+		<PackageVersion Include="MSTest.Analyzers" Version="4.0.1" />
+		<PackageVersion Include="MSTest.TestAdapter" Version="4.0.1" />
+		<PackageVersion Include="MSTest.TestFramework" Version="4.0.1" />
+	</ItemGroup>
+
+</Project>
